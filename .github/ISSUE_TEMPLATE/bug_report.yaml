@@ -1,0 +1,43 @@
+name: Bug Report
+description: Create a report to help us improve
+title: 'Bug: '
+labels: bug
+
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 问题描述
+      description: 请简要描述您遇到的问题。
+    validations:
+      required: false
+  - type: textarea
+    id: error
+    attributes:
+      label: 报错信息
+      description: 请将完整的报错信息粘贴到此处。
+    validations:
+      required: true
+  - type: textarea
+    id: version
+    attributes:
+      label: 版本信息
+      description: 请将您使用的版本信息粘贴到此处。
+      value: |
+        - Python:
+        - pandas:
+        - histcite-python:
+      render: markdown
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: 数据源
+      multiple: false
+      options:
+        - Web of Science
+        - Scopus
+        - CSSCI
+    validations:
+      required: true

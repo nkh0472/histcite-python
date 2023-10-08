@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "histcite-python"
+authors = [
+    {name = "WangK2", email = "kw221225@gmail.com"}
+    ]
+description = "A Python interface for histcite"
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = ["histcite",
+    "citation network",
+    "web of science",
+    "scopus",
+    "cssci",
+    ]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    ]
+dependencies = [
+    "pandas>=2.0",
+    "pyarrow",
+    "openpyxl",
+    ]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "coverage",
+    "black",
+    "mypy",
+    "ruff",
+    "pre-commit",
+    ]
+doc = ["pdoc"]
+
+[project.scripts]
+histcite = "histcite.__main__:cli"
+
+[project.urls]
+Repository = "https://github.com/doublessay/histcite-python"
+
+[tool.setuptools]
+packages = ["histcite"]
+
+[tool.setuptools.dynamic]
+version = {attr = "histcite.__version__"}
+
+[tool.ruff]
+ignore = [
+    "E402",
+    "E501",
+    "E722",
+    "F401",
+    ]
+fixable = ["ALL"]
+target-version = "py39"
