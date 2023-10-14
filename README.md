@@ -2,6 +2,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/histcite-python)](https://pypi.org/project/histcite-python)
 [![Supported Versions](https://img.shields.io/pypi/pyversions/histcite-python.svg)](https://pypi.org/project/histcite-python)
+[![Codecov](https://codecov.io/gh/doublessay/histcite-python/graph/badge.svg?token=99V9E2CI1H)](https://codecov.io/gh/doublessay/histcite-python)
 [![License](https://img.shields.io/pypi/l/histcite-python.svg)](https://github.com/doublessay/histcite-python/blob/main/LICENSE)
 
 由于原引文分析工具 [HistCite](https://support.clarivate.com/ScientificandAcademicResearch/s/article/HistCite-No-longer-in-active-development-or-officially-supported) 已停止维护，目前国内使用较多的为中科大某同学 (知乎昵称[Tsing](https://www.zhihu.com/people/wq123)) 在源程序基础上修复的版本 [HistCite Pro](https://zhuanlan.zhihu.com/p/20902898)，仅适用于 `Windows` 平台，存在较大限制。借助 [pandas 2.0](https://pandas.pydata.org/docs/dev/index.html) 和可视化工具 [Graphviz](https://graphviz.org)，本工具实现了 `HistCite` 的核心功能，可以跨平台使用，同时拓展了对 [其他数据源](#数据准备) 的支持。
@@ -61,10 +62,10 @@ $ histcite /Users/.../Downloads/dataset wos --top 100 --disable_timeline
 
 > [!NOTE]  
 > 生成的结果保存在 `folder_path` 下的 `result` 文件夹内，包含  
-① 描述统计表 descriptive_statistics.xlsx  
-② 引文网络图节点信息表 graph_node_info.xlsx  
-③ 引文网络图的数据文件 graph.dot  
-文件③可以使用 [Graphviz在线编辑器](http://magjac.com/graphviz-visual-editor/) 或下载到本地的 [Graphviz工具](https://graphviz.org/) 生成引文网络图。
+> - 描述统计表 descriptive_statistics.xlsx  
+> - 引文网络图节点信息表 graph_node_info.xlsx  
+> - 引文网络图的数据文件 graph.dot
+>     - 借助 [Graphviz在线编辑器](http://magjac.com/graphviz-visual-editor/) 或下载到本地的 [Graphviz工具](https://graphviz.org/) 生成引文网络图。
 
 引文网络图示例：
 
@@ -114,11 +115,11 @@ $ histcite /Users/.../Downloads/dataset wos --top 100 --disable_timeline
 | ... | [Please refer to Web of Science fields.](https://images.webofknowledge.com/WOKRS5132R4.2/help/WOS/hs_wos_fieldtags.html) |
 
 ## FAQ
-1. 为什么生成的引文网络图时间线会错乱？  
-Graphviz 会自动调整节点位置，节点数量过少时容易出现这一问题。可以通过设置参数来关闭时间线。
+1. 为什么生成的引文网络图时间线会错乱？
+- Graphviz 会自动调整节点位置，节点数量过少时容易出现这一问题。可以通过设置参数来关闭时间线。
 
-2. 为什么有些学科领域的参考文献解析的错误率较高？  
-不同学科领域的主要引用来源不同，期刊引用格式要求不同，研究者的引用习惯也不同，导致不同数据库、不同学科领域的引文格式与解析方式差异较大。您可以查看解析后的参考文献表(refs_df)，如果错误率较高，或者发现具有某种特征的参考文献均出现了解析错误，欢迎提交 [Feature Request](https://github.com/doublessay/histcite-python/issues)，我们会尽快修复。
+2. 为什么有些学科领域的参考文献解析的错误率较高？
+- 不同学科领域的主要引用来源不同，期刊引用格式要求不同，研究者的引用习惯也不同，导致不同数据库、不同学科领域的引文格式与解析方式差异较大。您可以查看解析后的参考文献表 (refs_df)，如果错误率较高，或者发现某种特征的参考文献均出现了解析错误，欢迎提交 [Feature Request](https://github.com/doublessay/histcite-python/issues)，我们会尽快修复。
 
-3. 想要分析其他数据源的文献元数据？  
-该数据源必须能下载文献的参考文献信息。如果满足这一条件的话，欢迎提交 [Feature Request](https://github.com/doublessay/histcite-python/issues)，我们会尽快支持。
+3. 想要分析其他数据源的文献元数据？
+- 该数据源必须能下载文献的参考文献信息。如果满足这一条件的话，欢迎提交 [Feature Request](https://github.com/doublessay/histcite-python/issues)，我们会尽快支持。

@@ -26,7 +26,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         path: ./dist
-  
+
   publish:
     name: Publish package
     runs-on: ubuntu-latest

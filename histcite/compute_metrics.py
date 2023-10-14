@@ -1,4 +1,4 @@
-"""This module is used to generate and export descriptive statistics. 
+"""This module is used to generate and export descriptive statistics.
 
 Supported statistic units:
 - Author
