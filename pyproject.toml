@@ -43,7 +43,6 @@ test = [
     "ruff",
     "pre-commit",
     ]
-doc = ["pdoc"]
 
 [project.scripts]
 histcite = "histcite.__main__:cli"
@@ -66,3 +65,6 @@ ignore = [
     ]
 fixable = ["ALL"]
 target-version = "py39"
+
+[tool.coverage.run]
+source = ["histcite"]
