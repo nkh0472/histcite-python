@@ -83,8 +83,6 @@ $ histcite /Users/.../Downloads/dataset wos --top 100 --disable_timeline
 
 2. 使用Jupyter，比命令行更加灵活，可以自定义更多参数，查看 [demo.ipynb](demo.ipynb)
 
-3. [API文档](https://doublessay.github.io/histcite-python/)
-
 ## 字段说明
 | Field Name | Description |
 | :---: | --- |
