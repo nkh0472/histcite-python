@@ -1,8 +1,11 @@
+from pandas.core.frame import DataFrame
 import pytest
 from histcite.network_graph import GraphViz
 
 
-def test_generate_dot_file(cssci_docs_df, cssci_citation_relationship):
+def test_generate_dot_file(
+    cssci_docs_df: DataFrame, cssci_citation_relationship: DataFrame
+):
     source = "cssci"
     graph = GraphViz(cssci_docs_df, cssci_citation_relationship, source)
     graph_dot_file = graph.generate_dot_file(doc_indices=10, edge_type="cited")

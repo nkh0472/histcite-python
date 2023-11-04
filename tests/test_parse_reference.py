@@ -6,7 +6,7 @@ cssci_ref = "1.严栋.基于物联网的智慧图书馆.图书馆学刊.2010.32(
 scopus_ref = "Negri E, Fumagalli L, Macchi M., A Review of the Roles of Digital Twin in CPS-based Production Systems, Procedia Manufacturing, 11, pp. 939-948, (2017)"
 
 
-def test_parse_one_cell():
+def test_parse_one_ref():
     parsed_wos_ref = ParseReference().parse_one_ref(wos_ref_cell.split(";")[0], "wos")
 
     assert isinstance(parsed_wos_ref, dict)

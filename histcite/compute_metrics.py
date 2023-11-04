@@ -9,6 +9,7 @@ Supported statistic units:
 - Document type
 """
 import os
+from pathlib import Path
 from typing import Literal, Optional
 
 import pandas as pd
@@ -190,7 +191,7 @@ class ComputeMetrics:
     #     refs_df.insert(len(refs_df.columns) - 1, "local", refs_df.pop("local"))
     #     return refs_df.sort_values(by="Recs", ascending=False)
 
-    def write2excel(self, save_path: str):
+    def write2excel(self, save_path: Path):
         """Write all dataframes to an excel file. Each dataframe is a sheet.
 
         Args:
