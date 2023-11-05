@@ -8,7 +8,6 @@ Supported statistic units:
 - Publication year
 - Document type
 """
-import os
 from pathlib import Path
 from typing import Literal, Optional
 
@@ -200,8 +199,7 @@ class ComputeMetrics:
         Returns:
             An excel file with multiple sheets.
         """
-        save_folder_path = os.path.dirname(save_path)
-        os.makedirs(save_folder_path, exist_ok=True)
+        Path.mkdir(save_path.parent, exist_ok=True)
         with pd.ExcelWriter(save_path) as writer:
             self.generate_record_df().to_excel(
                 writer, sheet_name="Records", index=False

@@ -1,4 +1,5 @@
 """This module is used to generate network graph in dot language."""
+from pathlib import Path
 from typing import Hashable, Literal, Optional, Union
 
 import pandas as pd
@@ -244,5 +245,5 @@ class GraphViz:
             graph_node_info.rename(columns={"TC": "GCS"}, inplace=True)
         return graph_node_info
 
-    def _export_graph_node_info(self, file_path: str):
+    def _export_graph_node_info(self, file_path: Path):
         self.generate_graph_node_info().to_excel(file_path, index=False)

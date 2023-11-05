@@ -229,6 +229,8 @@ class ParseReference:
 
             else:
                 return None
+        else:
+            return None
 
     @staticmethod
     def _parse_scopus_ref(ref: str) -> Optional[ScopusField]:

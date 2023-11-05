@@ -1,11 +1,14 @@
+from pathlib import Path
 from typing import Literal
+
 import pytest
+
 from histcite.read_file import ReadFile
 from histcite.process_file import ProcessFile
 
 
 def obtain_docs_df(source: Literal["wos", "cssci", "scopus"]):
-    folder_path = "tests/testdata"
+    folder_path = Path("tests/testdata")
     reader = ReadFile(folder_path, source)
     docs_df = reader.read_all()
     return docs_df

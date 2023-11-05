@@ -1,5 +1,5 @@
 import argparse
-import os
+from pathlib import Path
 
 from .compute_metrics import ComputeMetrics
 from .network_graph import GraphViz
@@ -39,9 +39,8 @@ def cli():
     )
 
     args = parser.parse_args()
-    output_path = os.path.join(args.folder_path, "result")
-    if not os.path.exists(output_path):
-        os.mkdir(output_path)
+    output_path = Path(args.folder_path, "result")
+    Path.mkdir(output_path, exist_ok=True)
 
     docs_df = ReadFile(args.folder_path, args.source).read_all()
     process = ProcessFile(docs_df, args.source)
@@ -49,7 +48,7 @@ def cli():
     citation_relationship = process.process_citation(refs_df)
 
     cm = ComputeMetrics(docs_df, citation_relationship, args.source)
-    cm.write2excel(os.path.join(output_path, "descriptive_statistics.xlsx"))
+    cm.write2excel(output_path / "descriptive_statistics.xlsx")
 
     graph = GraphViz(docs_df, citation_relationship, args.source)
 
@@ -72,7 +71,7 @@ def cli():
     graph_dot_file = graph.generate_dot_file(
         doc_indices, show_timeline=args.disable_timeline
     )
-    graph_dot_path = os.path.join(output_path, "graph.dot")
+    graph_dot_path = output_path / "graph.dot"
     with open(graph_dot_path, "w") as f:
         f.write(graph_dot_file)
-    graph._export_graph_node_info(os.path.join(output_path, "graph_node_info.xlsx"))
+    graph._export_graph_node_info(output_path / "graph_node_info.xlsx")

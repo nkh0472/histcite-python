@@ -5,14 +5,14 @@ Supported file types:
 - CSSCI: LY_.txt
 - Scopus: scopus.csv
 """
-import os
+from pathlib import Path
 import re
 from typing import Callable, Literal
 
 import pandas as pd
 
 
-def read_csv_file(file_path: str, use_cols: list[str], sep: str = ",") -> pd.DataFrame:
+def read_csv_file(file_path: Path, use_cols: list[str], sep: str = ",") -> pd.DataFrame:
     """Read csv file using `pyarrow` backend."""
     try:
         df = pd.read_csv(
@@ -25,8 +25,7 @@ def read_csv_file(file_path: str, use_cols: list[str], sep: str = ",") -> pd.Dat
         )
         return df
     except ValueError:
-        file_name = os.path.basename(file_path)
-        raise ValueError(f"File {file_name} is not a valid csv file")
+        raise ValueError(f"File {file_path.name} is not a valid csv file")
 
 
 class ReadWosFile:
@@ -35,7 +34,7 @@ class ReadWosFile:
         return au_field.str.split(pat=";", n=1, expand=True)[0].str.replace(",", "")
 
     @staticmethod
-    def read_wos_file(file_path: str) -> pd.DataFrame:
+    def read_wos_file(file_path: Path) -> pd.DataFrame:
         """Read Web of Science file and return dataframe.
 
         Args:
@@ -60,7 +59,7 @@ class ReadWosFile:
         ]
         df = read_csv_file(file_path, use_cols, "\t")
         df.insert(1, "FAU", ReadWosFile._extract_first_author(df["AU"]))
-        df["source file"] = os.path.basename(file_path)
+        df["source file"] = file_path.name
         return df
 
 
@@ -72,7 +71,7 @@ class ReadCssciFile:
         return "; ".join(org_list)
 
     @staticmethod
-    def read_cssci_file(file_path: str) -> pd.DataFrame:
+    def read_cssci_file(file_path: Path) -> pd.DataFrame:
         """Read CSSCI file and return dataframe. Use `WOS` fields to replace original fields.
 
         Args:
@@ -124,13 +123,13 @@ class ReadCssciFile:
         df["CR"] = df["CR"].str.replace("\n", "; ")
         df["NR"] = df["CR"].str.count("; ") + 1
         df.insert(2, "FAU", df.pop("FAU"))
-        df["source file"] = os.path.basename(file_path)
+        df["source file"] = file_path.name
         return df
 
 
 class ReadScopusFile:
     @staticmethod
-    def read_scopus_file(file_path: str) -> pd.DataFrame:
+    def read_scopus_file(file_path: Path) -> pd.DataFrame:
         """Read Scopus file and return dataframe. Use `WOS` fields to replace original fields.
 
         Args:
@@ -175,50 +174,52 @@ class ReadScopusFile:
 
         df["NR"] = df["CR"].str.count("; ")
         df.insert(1, "FAU", df["AU"].str.split(pat=";", n=1, expand=True)[0])
-        df["source file"] = os.path.basename(file_path)
+        df["source file"] = file_path.name
         return df
 
 
 class ReadFile:
     """Read files in the folder path and return a concated dataframe."""
 
-    def __init__(self, folder_path: str, source: Literal["wos", "cssci", "scopus"]):
+    def __init__(self, folder_path: Path, source: Literal["wos", "cssci", "scopus"]):
         """
         Args:
             folder_path: The folder path of raw files.
             source: Data source. `wos`, `cssci` or `scopus`.
         """
-        self._folder_path: str = folder_path
+        self._folder_path: Path = folder_path
         self._source: Literal["wos", "cssci", "scopus"] = source
-        self._file_path_list: list[str] = self._obrain_file_path_list()
+        try:
+            self._file_path_list: list[Path] = self._obtain_file_path_list()
+        except FileNotFoundError:
+            raise FileNotFoundError(f"{folder_path} 文件夹不存在")
 
-    def _obrain_file_path_list(self) -> list[str]:
+    def _obtain_file_path_list(self) -> list[Path]:
         if self._source == "wos":
             file_name_list = [
-                i for i in os.listdir(self._folder_path) if i.startswith("savedrecs")
+                i for i in self._folder_path.iterdir() if i.name.startswith("savedrecs")
             ]
         elif self._source == "cssci":
             file_name_list = [
-                i for i in os.listdir(self._folder_path) if i.startswith("LY_")
+                i for i in self._folder_path.iterdir() if i.name.startswith("LY_")
             ]
         elif self._source == "scopus":
             file_name_list = [
-                i for i in os.listdir(self._folder_path) if i.startswith("scopus")
+                i for i in self._folder_path.iterdir() if i.name.startswith("scopus")
             ]
         else:
             raise ValueError("Invalid data source")
         file_name_list.sort()
-        return [
-            os.path.join(self._folder_path, file_name) for file_name in file_name_list
-        ]
+        return file_name_list
 
-    def _concat_df(self, read_file_func: Callable[[str], pd.DataFrame]) -> pd.DataFrame:
+    def _concat_df(
+        self, read_file_func: Callable[[Path], pd.DataFrame]
+    ) -> pd.DataFrame:
         file_count = len(self._file_path_list)
         if file_count > 1:
             return pd.concat(
                 [read_file_func(file_path) for file_path in self._file_path_list],
                 ignore_index=True,
-                copy=False,
             )
         elif file_count == 1:
             return read_file_func(self._file_path_list[0])
