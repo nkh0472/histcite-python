@@ -29,24 +29,24 @@ def scopus_docs_df():
     return obtain_docs_df("scopus")
 
 
-def obtain_citation_relationship(source: Literal["wos", "cssci", "scopus"]):
+def obtain_citation_relation(source: Literal["wos", "cssci", "scopus"]):
     docs_df = obtain_docs_df(source)
     process = ProcessFile(docs_df, source)
     refs_df = process.extract_reference()
-    citation_relationship = process.process_citation(refs_df)
-    return citation_relationship
+    citation_relation = process.process_citation(refs_df)
+    return citation_relation
 
 
 @pytest.fixture(scope="session")
-def wos_citation_relationship():
-    return obtain_citation_relationship("wos")
+def wos_citation_relation():
+    return obtain_citation_relation("wos")
 
 
 @pytest.fixture(scope="session")
-def cssci_citation_relationship():
-    return obtain_citation_relationship("cssci")
+def cssci_citation_relation():
+    return obtain_citation_relation("cssci")
 
 
 @pytest.fixture(scope="session")
-def scopus_citation_relationship():
-    return obtain_citation_relationship("scopus")
+def scopus_citation_relation():
+    return obtain_citation_relation("scopus")

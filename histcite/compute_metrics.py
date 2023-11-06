@@ -20,17 +20,17 @@ class ComputeMetrics:
     def __init__(
         self,
         docs_df: pd.DataFrame,
-        citation_relationship: pd.DataFrame,
+        citation_relation: pd.DataFrame,
         source: Literal["wos", "cssci", "scopus"],
     ):
         """
         Args:
             docs_df: DataFrame of docs.
-            citation_relationship: DataFrame of citation relationship.
+            citation_relation: DataFrame of citation relationship.
             source: Data source. `wos`, `cssci` or `scopus`.
         """
         self._merged_docs_df: pd.DataFrame = docs_df.merge(
-            citation_relationship[["doc_index", "LCR", "LCS"]], on="doc_index"
+            citation_relation[["doc_id", "LCR", "LCS"]], on="doc_id"
         )
         self._source: Literal["wos", "cssci", "scopus"] = source
 

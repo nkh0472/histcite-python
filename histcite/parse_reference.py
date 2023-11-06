@@ -225,7 +225,7 @@ class ParseReference:
 
             # elif dot_count == 1:
             #     _, TI = re.split(dot_pattern, ref)
-            #     return CssciField(None, TI, None, None, None, doc_index)
+            #     return CssciField(None, TI, None, None, None, doc_id)
 
             else:
                 return None
@@ -374,14 +374,14 @@ class ParseReference:
         self,
         ref: str,
         source: Literal["wos", "cssci", "scopus"],
-        doc_index: Optional[int] = None,
+        doc_id: Optional[int] = None,
     ) -> Optional[dict[str, Any]]:
         """Parse a raw reference string.
 
         Args:
             ref: A raw reference string.
             source: Data source. `wos`, `cssci` or `scopus`.
-            doc_index: doc_index to which the reference belongs. Default None.
+            doc_id: doc_id to which the reference cell belongs. Default None.
 
         Returns:
             Parsed reference as a dict.
@@ -401,21 +401,22 @@ class ParseReference:
             raise ValueError("Invalid source type")
 
         if result is not None:
-            result["doc_index"] = doc_index
-        return result
+            return {"doc_id": doc_id} | result
+        else:
+            return None
 
     def parse_ref_cell(
         self,
         ref_cell: str,
         source: Literal["wos", "cssci", "scopus"],
-        doc_index: Optional[int] = None,
+        doc_id: Optional[int] = None,
     ) -> Iterator[dict[str, Any]]:
         """Parse a reference cell.
 
         Args:
             ref_cell: A reference cell.
             source: Data source. `wos`, `cssci` or `scopus`.
-            doc_index: doc_index to which the reference cell belongs. Default None.
+            doc_id: doc_id to which the reference cell belongs. Default None.
 
         Returns:
             Generator of parsed references.
@@ -423,10 +424,10 @@ class ParseReference:
         sep = "; "
         try:
             ref_list = re.split(sep, ref_cell)
-        except:
+        except Exception:
             pass
         else:
             for ref in ref_list:
-                parsed_ref = self.parse_one_ref(ref, source, doc_index)
+                parsed_ref = self.parse_one_ref(ref, source, doc_id)
                 if parsed_ref is not None:
                     yield parsed_ref

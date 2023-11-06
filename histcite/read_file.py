@@ -265,5 +265,5 @@ class ReadFile:
         else:
             raise ValueError("Invalid data source")
         drop_duplicate_rows()
-        docs_df.insert(0, "doc_index", docs_df.index)
+        docs_df.insert(0, "doc_id", docs_df.index)
         return docs_df

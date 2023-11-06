@@ -9,7 +9,6 @@ from .read_file import ReadFile
 
 def cli():
     parser = argparse.ArgumentParser(description="A Python interface for histcite.")
-
     # Positional arguments
     parser.add_argument(
         "folder_path",
@@ -39,37 +38,38 @@ def cli():
     )
 
     args = parser.parse_args()
-    output_path = Path(args.folder_path, "result")
+    folder_path = Path(args.folder_path)
+    output_path = folder_path / "result"
     Path.mkdir(output_path, exist_ok=True)
 
-    docs_df = ReadFile(args.folder_path, args.source).read_all()
+    docs_df = ReadFile(folder_path, args.source).read_all()
     process = ProcessFile(docs_df, args.source)
     refs_df = process.extract_reference()
-    citation_relationship = process.process_citation(refs_df)
+    citation_relation = process.process_citation(refs_df)
 
-    cm = ComputeMetrics(docs_df, citation_relationship, args.source)
+    cm = ComputeMetrics(docs_df, citation_relation, args.source)
     cm.write2excel(output_path / "descriptive_statistics.xlsx")
 
-    graph = GraphViz(docs_df, citation_relationship, args.source)
+    graph = GraphViz(docs_df, citation_relation, args.source)
 
     if args.top is not None:
-        doc_indices = (
-            citation_relationship[citation_relationship["LCS"] > 0]
+        doc_id_list = (
+            citation_relation[citation_relation["LCS"] > 0]
             .sort_values("LCS", ascending=False)
             .index[: args.top]
             .tolist()
         )
 
     elif args.threshold is not None:
-        doc_indices = citation_relationship[
-            citation_relationship["LCS"] >= args.threshold
+        doc_id_list = citation_relation[
+            citation_relation["LCS"] >= args.threshold
         ].index.tolist()
 
     else:
-        raise ValueError("One of -top, -threshold must be specified.")
+        raise ValueError("<top> or <threshold> must be specified.")
 
     graph_dot_file = graph.generate_dot_file(
-        doc_indices, show_timeline=args.disable_timeline
+        doc_id_list, show_timeline=args.disable_timeline
     )
     graph_dot_path = output_path / "graph.dot"
     with open(graph_dot_path, "w") as f:

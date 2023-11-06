@@ -34,13 +34,13 @@ class RecognizeReference:
             except Exception:
                 pass
 
-        docs_df = docs_df[["doc_index"] + compare_cols]
-        refs_df = refs_df[["doc_index", "ref_index"] + compare_cols]
+        docs_df = docs_df[["doc_id"] + compare_cols]
+        refs_df = refs_df[["doc_id", "ref_index"] + compare_cols]
         shared_df = pd.merge(
             refs_df, docs_df, how="left", on=compare_cols, suffixes=("_x", "_y")
-        ).dropna(subset="doc_index_y")
-        shared_df = shared_df.astype({"doc_index_y": "int64"})
-        cited_refs_series = shared_df.groupby("doc_index_x")["doc_index_y"].apply(list)
+        ).dropna(subset="doc_id_y")
+        shared_df = shared_df.astype({"doc_id_y": "int64"})
+        cited_refs_series = shared_df.groupby("doc_id_x")["doc_id_y"].apply(list)
         cited_refs_series = cited_refs_series.apply(lambda x: sorted(x))
         # local_refs_series = shared_df["ref_index"].reset_index(drop=True)
         return cited_refs_series
