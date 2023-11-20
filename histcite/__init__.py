@@ -19,3 +19,19 @@ __all__ = [
     "ReadFile",
     "RecognizeReference",
 ]
+
+import sys
+import platform
+from importlib.metadata import version
+
+
+def show_versions():
+    uname_result = platform.uname()
+    info = {
+        "python": ".".join([str(i) for i in sys.version_info]),
+        "OS": uname_result.system + " " + uname_result.release,
+        "pandas": version("pandas"),
+        "pyarrow": version("pyarrow")
+    }
+    for k, v in info.items():
+        print(f"{k}: {v}")

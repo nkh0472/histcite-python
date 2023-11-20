@@ -11,6 +11,7 @@ body:
       description: 请简要描述您遇到的问题。
     validations:
       required: false
+
   - type: textarea
     id: error
     attributes:
@@ -18,22 +19,19 @@ body:
       description: 请将完整的报错信息粘贴到此处。
     validations:
       required: true
+
   - type: textarea
     id: version
     attributes:
       label: 版本信息
-      description: 请将您使用的版本信息粘贴到此处。
-      value: |
-        - Python:
-        - pandas:
-        - histcite-python:
-      render: markdown
+      description: 请粘贴 ``import histcite; histcite.show_versions()`` 的结果。
     validations:
       required: true
+
   - type: dropdown
     id: source
     attributes:
-      label: 数据源
+      label: 使用数据源
       multiple: false
       options:
         - Web of Science

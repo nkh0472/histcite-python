@@ -9,15 +9,16 @@ body:
     attributes:
       label: Feature类型
       options:
-        - label: 参考文献解析提升
+        - label: 参考文献解析
         - label: 支持其他数据源
         - label: 增加其他功能
     validations:
       required: true
+
   - type: dropdown
     id: source
     attributes:
-      label: 数据源
+      label: 使用数据源
       multiple: false
       options:
         - Web of Science
@@ -26,11 +27,11 @@ body:
         - 其他
     validations:
       required: true
+
   - type: textarea
     id: description
     attributes:
       label: Feature描述
-      description: 请简要描述您的Feature。
       placeholder: 请提供一份包含500-1000条数据的原始数据集[非必要]。
     validations:
       required: true
