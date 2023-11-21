@@ -21,6 +21,8 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -36,12 +38,11 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-test = [
+dev = [
     "pytest",
     "coverage",
     "black",
     "mypy",
-    "ruff",
     "pre-commit",
     ]
 
@@ -56,16 +57,6 @@ packages = ["histcite"]
 
 [tool.setuptools.dynamic]
 version = {attr = "histcite.__version__"}
-
-[tool.ruff]
-ignore = [
-    "E402",
-    "E501",
-    "E722",
-    "F401",
-    ]
-fixable = ["ALL"]
-target-version = "py39"
 
 [tool.coverage.run]
 source = ["histcite"]

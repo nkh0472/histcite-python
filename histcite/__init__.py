@@ -2,7 +2,7 @@
 Welcome to use `histcite-python`. You can get detailed information about the package here.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 from .compute_metrics import ComputeMetrics
 from .network_graph import GraphViz
@@ -31,7 +31,7 @@ def show_versions():
         "python": ".".join([str(i) for i in sys.version_info]),
         "OS": uname_result.system + " " + uname_result.release,
         "pandas": version("pandas"),
-        "pyarrow": version("pyarrow")
+        "pyarrow": version("pyarrow"),
     }
     for k, v in info.items():
         print(f"{k}: {v}")
