@@ -14,7 +14,7 @@
 
 工具对比：
 | 对比项 | histcite-python | histcite pro |
-| :-: | :-: | :-: |
+| --- | --- | --- |
 | 是否开源 | 是 | 否 |
 | 是否跨平台 | 是| 否，仅限 Windows |
 | 是否支持其他数据源 | 是  | 否，仅限 Web of Science |
@@ -28,13 +28,12 @@ pip install histcite-python
 
 ## 数据准备
 | 数据来源 | 下载说明 |
-| :---: | --- |
-| [Web of Science](https://www.webofscience.com/wos/woscc/basic-search) | `核心合集`，格式选择 `Tab delimited file/制表符分隔文件`，导出内容选择 `Full Record and Cited References/全记录与引用的参考文献` 或者是 `Custom selection/自定义选择项`，全选字段。 |
-| [CSSCI](http://cssci.nju.edu.cn) | 从 `CSSCI数据库` 正常导出即可。 |
-| [Scopus](https://www.scopus.com/search/form.uri) | 格式选择 `CSV` 文件，导出字段需要额外勾选 `Author keywords` 和 `Include references`，或者直接全选字段。 |
+| --- | --- |
+| Web of Science | `核心合集`，格式选择 `Tab delimited file/制表符分隔文件`，导出内容选择 `Full Record and Cited References/全记录与引用的参考文献` 或者是 `Custom selection/自定义选择项`，全选字段。 |
+| CSSCI | 从 `CSSCI数据库` 正常导出即可。 |
+| Scopus | 格式选择 `CSV` 文件，导出字段需要额外勾选 `Author keywords` 和 `Include references`，或者直接全选字段。 |
 
 > [!WARNING]  
-> 在 Web of Science 和 Scopus 平台检索时须将检索结果语言限定为英文；  
 > 文件下载之后不要重命名(会根据文件名识别有效的题录数据文件)，下载完成后放在一个单独的文件夹内。
 
 ## 使用方法
@@ -93,31 +92,31 @@ $ histcite /Users/.../Downloads/dataset wos --top 100 --disable_timeline
 | `T*`  | Total score, e.g. TLCS = Total Local Citation Scores. |
 | `Recs` | Count of Records |
 | `FAU` | First Author |
-| `AU` | Author |
-| `TI` | Title |
-| `SO` | Publication Name |
+| `AU` | Authors or Inventors |
+| `TI` | Article Title |
+| `SO` | Source Title |
 | `DT` | Document Type |
-| `FU` | Funding Agency |
+| `FU` | Funding Orgs |
 | `CR` | Cited References |
 | `DE` | Author Keywords |
-| `C3` | Affiliation |
+| `C3` | Author Affiliations |
 | `NR` | Cited Reference Count |
 | `TC` | Times Cited Count |
-| `J9` | 29-Character Source Abbreviation |
+| `J9` | Journal Abbreviation |
 | `PY` | Publication Year |
 | `VL` | Volume |
 | `IS` | Issue |
-| `BP` | Beginning Page |
-| `EP` | Ending Page |
+| `BP` | Start Page |
+| `EP` | End Page |
 | `DI` | DOI |
-| ... | [Please refer to Web of Science fields.](https://images.webofknowledge.com/WOKRS5132R4.2/help/WOS/hs_wos_fieldtags.html) |
+| ... | [Please refer to Web of Science fields.](https://webofscience.help.clarivate.com/en-us/Content/export-records.htm) |
 
 ## FAQ
 1. 为什么生成的引文网络图时间线会错乱？
 - Graphviz 会自动调整节点位置，节点数量过少时容易出现这一问题。可以通过设置参数来关闭时间线。
 
 2. 为什么有些学科领域的参考文献解析的错误率较高？
-- 不同学科领域的主要引用来源不同，期刊引用格式要求不同，研究者的引用习惯也不同，导致不同数据库、不同学科领域的引文格式与解析方式差异较大。您可以查看解析后的参考文献表 (refs_df)，如果错误率较高，或者发现某种特征的参考文献均出现了解析错误，欢迎提交 [Feature Request](https://github.com/doublessay/histcite-python/issues)，我们会尽快修复。
+- 不同学科领域的主要引用来源不同，期刊引用格式要求不同，导致不同数据库、不同学科领域的引文格式与解析方式差异较大。您可以查看解析后的参考文献表 (refs_df)，如果错误率较高，或者发现具有某种特征的参考文献均出现了解析错误，欢迎提交 [Feature Request](https://github.com/doublessay/histcite-python/issues)，我们会尽快修复。
 
 3. 想要分析其他数据源的文献元数据？
-- 该数据源必须能下载文献的参考文献信息。如果满足这一条件的话，欢迎提交 [Feature Request](https://github.com/doublessay/histcite-python/issues)，我们会尽快支持。
+- 该数据源能够导出文献的参考文献或引文数据。如果满足这一条件的话，欢迎提交 [Feature Request](https://github.com/doublessay/histcite-python/issues)，我们会尽快支持。
