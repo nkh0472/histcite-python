@@ -13,13 +13,13 @@
 - 发现不在本地文献集中、但被本地文献集引用较多的文献，即本次文献获取过程忽略的重要文献；
 
 工具对比：
-| 对比项 | histcite-python | histcite pro |
-| --- | --- | --- |
-| 是否开源 | 是 | 否 |
-| 是否跨平台 | 是| 否，仅限 Windows |
-| 是否支持其他数据源 | 是  | 否，仅限 Web of Science |
-| 是否提供前端界面 | 否 | 是 |
-| 引文网络图 | 矢量图，比较清晰 | 位图，比较模糊 |
+|对比项|histcite-python|histcite pro|
+|:----|:----|:----|
+|是否开源|是|否|
+|是否跨平台|是|否，仅限 Windows|
+|是否支持其他数据源|是|否，仅限 Web of Science|
+|是否提供前端界面|否|是|
+|引文网络图|矢量图，比较清晰|位图，比较模糊|
 
 ## 快速开始
 ```console
@@ -27,11 +27,11 @@ pip install histcite-python
 ```
 
 ## 数据准备
-| 数据来源 | 下载说明 |
-| --- | --- |
-| Web of Science | `核心合集`，格式选择 `Tab delimited file/制表符分隔文件`，导出内容选择 `Full Record and Cited References/全记录与引用的参考文献` 或者是 `Custom selection/自定义选择项`，全选字段。 |
-| CSSCI | 从 `CSSCI数据库` 正常导出即可。 |
-| Scopus | 格式选择 `CSV` 文件，导出字段需要额外勾选 `Author keywords` 和 `Include references`，或者直接全选字段。 |
+|数据来源|下载说明|
+|:----|:----|
+|Web of Science|`核心合集`，格式选择 `Tab delimited file/制表符分隔文件`，导出内容选择 `Full Record and Cited References/全记录与引用的参考文献` 或者是 `Custom selection/自定义选择项`，全选字段。|
+|CSSCI|从 `CSSCI数据库` 正常导出即可。|
+|Scopus|格式选择 `CSV` 文件，导出字段需要额外勾选 `Author keywords` 和 `Include references`，或者直接全选字段。|
 
 > [!WARNING]  
 > 文件下载之后不要重命名(会根据文件名识别有效的题录数据文件)，下载完成后放在一个单独的文件夹内。
@@ -71,45 +71,45 @@ $ histcite /Users/.../Downloads/dataset wos --top 100 --disable_timeline
 ![](https://raw.githubusercontent.com/doublessay/histcite-python/main/examples/graph.svg)
 
 对应的节点信息如下(以CSSCI数据源为例，不同文献数据库的节点信息字段存在差异)：
-|    | AU                                       | TI                                                   |   PY | SO             |   LCS |
-|------------:|:-----------------------------------------|:-----------------------------------------------------|-----:|:---------------|------:|
-|          55 | 张坤; 查先进                             | 我国智慧图书馆的发展沿革及构建策略研究               | 2021 | 国家图书馆学刊 |     6 |
-|          60 | 石婷婷; 徐建华; 张雨浓                   | 数字孪生技术驱动下的智慧图书馆应用场景与体系架构设计 | 2021 | 情报理论与实践 |     7 |
-|          63 | 卢小宾; 宋姬芳; 蒋玲; 洪先锋; 刘静; 张薷 | 智慧图书馆建设标准探析                               | 2021 | 中国图书馆学报 |     9 |
-|          81 | 程焕文; 钟远薪                           | 智慧图书馆的三维解析                                 | 2021 | 图书馆论坛     |    10 |
-|          86 | 段美珍; 初景利; 张冬荣; 解贺嘉           | 智慧图书馆的内涵特点及其认知模型研究                 | 2021 | 图书情报工作   |     7 |
-|         ... |                                      |                                                |      |              |       |
+| |AU|TI|PY|SO|LCS|
+|:----|:----|:----|:----|:----|:----|
+|55|张坤; 查先进|我国智慧图书馆的发展沿革及构建策略研究|2021|国家图书馆学刊|6|
+|60|石婷婷; 徐建华; 张雨浓|数字孪生技术驱动下的智慧图书馆应用场景与体系架构设计|2021|情报理论与实践|7|
+|63|卢小宾; 宋姬芳; 蒋玲; 洪先锋; 刘静; 张薷|智慧图书馆建设标准探析|2021|中国图书馆学报|9|
+|81|程焕文; 钟远薪|智慧图书馆的三维解析|2021|图书馆论坛|10|
+|86|段美珍; 初景利; 张冬荣; 解贺嘉|智慧图书馆的内涵特点及其认知模型研究|2021|图书情报工作|7|
+|...| | | | | |
 
 2. 使用Jupyter，比命令行更加灵活，可以自定义更多参数，查看 [demo.ipynb](demo.ipynb)
 
 ## 字段说明
-| Field Name | Description |
-| :---: | --- |
-| `GCS` | Global Citation Score, 表示一篇文献在文献数据库中的总被引次数 |
-| `LCS` | Local Citation Score, 表示一篇文献在本地文献集中的被引次数 |
-| `GCR` | Global Cited References, 表示一篇文献的参考文献数量 |
-| `LCR` | Local Cited References, 表示一篇文献的参考文献在本地文献集中的数量 |
-| `T*`  | Total score, e.g. TLCS = Total Local Citation Scores. |
-| `Recs` | Count of Records |
-| `FAU` | First Author |
-| `AU` | Authors or Inventors |
-| `TI` | Article Title |
-| `SO` | Source Title |
-| `DT` | Document Type |
-| `FU` | Funding Orgs |
-| `CR` | Cited References |
-| `DE` | Author Keywords |
-| `C3` | Author Affiliations |
-| `NR` | Cited Reference Count |
-| `TC` | Times Cited Count |
-| `J9` | Journal Abbreviation |
-| `PY` | Publication Year |
-| `VL` | Volume |
-| `IS` | Issue |
-| `BP` | Start Page |
-| `EP` | End Page |
-| `DI` | DOI |
-| ... | [Please refer to Web of Science fields.](https://webofscience.help.clarivate.com/en-us/Content/export-records.htm) |
+|Field Name|Description|
+|:----|:----|
+|`GCS`|Global Citation Score, 表示一篇文献在文献数据库中的总被引次数|
+|`LCS`|Local Citation Score, 表示一篇文献在本地文献集中的被引次数|
+|`GCR`|Global Cited References, 表示一篇文献的参考文献数量|
+|`LCR`|Local Cited References, 表示一篇文献的参考文献在本地文献集中的数量|
+|`T*` |Total score, e.g. TLCS = Total Local Citation Scores.|
+|`Recs`|Count of Records|
+|`FAU`|First Author|
+|`AU`|Authors or Inventors|
+|`TI`|Article Title|
+|`SO`|Source Title|
+|`DT`|Document Type|
+|`FU`|Funding Orgs|
+|`CR`|Cited References|
+|`DE`|Author Keywords|
+|`C3`|Author Affiliations|
+|`NR`|Cited Reference Count|
+|`TC`|Times Cited Count|
+|`J9`|Journal Abbreviation|
+|`PY`|Publication Year|
+|`VL`|Volume|
+|`IS`|Issue|
+|`BP`|Start Page|
+|`EP`|End Page|
+|`DI`|DOI|
+|...|[Please refer to Web of Science fields.](https://webofscience.help.clarivate.com/en-us/Content/export-records.htm)|
 
 ## FAQ
 1. 为什么生成的引文网络图时间线会错乱？
@@ -120,3 +120,8 @@ $ histcite /Users/.../Downloads/dataset wos --top 100 --disable_timeline
 
 3. 想要分析其他数据源的文献元数据？
 - 该数据源能够导出文献的参考文献或引文数据。如果满足这一条件的话，欢迎提交 [Feature Request](https://github.com/doublessay/histcite-python/issues)，我们会尽快支持。
+
+4. 是否存在其他类似的工具？
+- [Connected Papers](https://www.connectedpapers.com/)
+- [Litmpas](https://app.litmaps.com/)
+- [CitNetExplorer](https://www.citnetexplorer.nl/)
