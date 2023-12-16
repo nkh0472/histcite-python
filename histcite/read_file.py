@@ -258,6 +258,7 @@ class ReadFile:
 
         if self._source == "wos":
             docs_df = self._concat_df(ReadWosFile.read_wos_file)
+            docs_df = docs_df.astype({"PY": "string[pyarrow]", "BP": "string[pyarrow]"})
         elif self._source == "cssci":
             docs_df = self._concat_df(ReadCssciFile.read_cssci_file)
         elif self._source == "scopus":

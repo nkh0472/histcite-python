@@ -59,7 +59,7 @@ class ProcessFile:
                 check_cols = ["FAU", "TI"]
             else:
                 raise ValueError("Invalid source type")
-            return refs_df.groupby(by=check_cols, sort=False).ngroup()
+            return refs_df.groupby(by=check_cols, sort=False, dropna=False).ngroup()
 
         cr_field_series = self._docs_df["CR"]
         if self._source == "wos":
@@ -90,7 +90,6 @@ class ProcessFile:
         """Return citation relationship dataframe."""
         if self._source == "wos":
             self._docs_df["DI"] = self._docs_df["DI"].str.lower()
-            refs_df = refs_df.astype({"PY": "int64[pyarrow]"})
             cited_doc_id_series = RecognizeReference.recognize_wos_reference(
                 self._docs_df, refs_df
             )

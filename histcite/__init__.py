@@ -2,7 +2,7 @@
 Welcome to use `histcite-python`. You can get detailed information about the package here.
 """
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 from .compute_metrics import ComputeMetrics
 from .network_graph import GraphViz
