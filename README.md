@@ -123,5 +123,5 @@ $ histcite /Users/.../Downloads/dataset wos --top 100 --disable_timeline
 
 4. 是否存在其他类似的工具？
 - [Connected Papers](https://www.connectedpapers.com/)
-- [Litmpas](https://app.litmaps.com/)
+- [Litmaps](https://app.litmaps.com/)
 - [CitNetExplorer](https://www.citnetexplorer.nl/)

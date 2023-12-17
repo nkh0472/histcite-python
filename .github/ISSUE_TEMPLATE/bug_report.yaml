@@ -39,3 +39,11 @@ body:
         - CSSCI
     validations:
       required: true
+
+  - type: textarea
+    id: dataset
+    attributes:
+      label: 使用数据集
+      description: 请上传一份能复现bug的数据集。
+    validations:
+      required: false
