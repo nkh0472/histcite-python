@@ -27,14 +27,14 @@ pip install histcite-python
 ```
 
 ## 数据准备
-|数据来源|下载说明|
-|:----|:----|
-|Web of Science|`核心合集`，格式选择 `Tab delimited file/制表符分隔文件`，导出内容选择 `Full Record and Cited References/全记录与引用的参考文献` 或者是 `Custom selection/自定义选择项`，全选字段。|
-|CSSCI|从 `CSSCI数据库` 正常导出即可。|
-|Scopus|格式选择 `CSV` 文件，导出字段需要额外勾选 `Author keywords` 和 `Include references`，或者直接全选字段。|
+|数据来源|下载说明|默认文件名|
+|:----|:----|:----|
+|Web of Science|`核心合集`，格式选择 `Tab delimited file/制表符分隔文件`，导出内容选择 `Full Record and Cited References/全记录与引用的参考文献` 或者是 `Custom selection/自定义选择项`，全选字段。|`savedrecs*.txt`|
+|CSSCI|从 `CSSCI数据库` 正常导出即可。|`LY_*.txt`|
+|Scopus|格式选择 `CSV` 文件，导出字段需要额外勾选 `Author keywords` 和 `Include references`，或者直接全选字段。|`scopus*.csv`|
 
 > [!WARNING]  
-> 文件下载之后不要重命名(会根据文件名识别有效的题录数据文件)，下载完成后放在一个单独的文件夹内。
+> 文件下载后不要重命名(会根据文件名识别有效的题录数据文件)，把下载的所有文件放在一个单独的文件夹内。
 
 ## 使用方法
 1. 使用命令行工具
@@ -122,6 +122,7 @@ $ histcite /Users/.../Downloads/dataset wos --top 100 --disable_timeline
 - 该数据源能够导出文献的参考文献或引文数据。如果满足这一条件的话，欢迎提交 [Feature Request](https://github.com/doublessay/histcite-python/issues)，我们会尽快支持。
 
 4. 是否存在其他类似的工具？
+- [CiteSpace](https://citespace.podia.com/)
+- [CitNetExplorer](https://www.citnetexplorer.nl/)
 - [Connected Papers](https://www.connectedpapers.com/)
 - [Litmaps](https://app.litmaps.com/)
-- [CitNetExplorer](https://www.citnetexplorer.nl/)
