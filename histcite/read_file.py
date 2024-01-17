@@ -35,6 +35,9 @@ class ReadWosFile:
         
     @staticmethod
     def _parse_addr(input_str, is_RP=False):
+        # handle <NA>
+        input_str = '' if pd.isna(input_str) else input_str
+        
         # Parse C1 by default, parse RP if is_RP=True
         pattern = r'\(corresponding author\), (.*?)(?:;|$)' if is_RP else r'\] (.*?)(?:\[|$)'
 
