@@ -51,12 +51,12 @@ class ReadWosFile:
 
             for line in lines:
                 if ',' in line:
-                    fields = re.split(', +', line)
+                    fields = [item.strip() for item in re.split(',', line)]
 
                     subdivision = ', '.join(fields[:2]) if len(fields) > 3 else fields[0]
                     i2_set.add(subdivision)
 
-                    country = fields[-1]
+                    country = fields[-1].rstrip('.')
                     co_set.add(country)
 
         return list(i2_set), list(co_set)
@@ -89,6 +89,7 @@ class ReadWosFile:
         ]
         df = read_csv_file(file_path, use_cols, "\t")
         df.insert(1, "FAU", ReadWosFile._extract_first_author(df["AU"]))
+        
         # parse Institution with Subdivision ('I2') and Country ('CO') from C1 column by default, same as the original Histcite
         df[["I2", "CO"]] = df["RP"].apply(lambda x: pd.Series(ReadWosFile._parse_addr(x, False)))
         df["source file"] = file_path.name
