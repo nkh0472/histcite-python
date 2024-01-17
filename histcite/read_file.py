@@ -32,6 +32,31 @@ class ReadWosFile:
     @staticmethod
     def _extract_first_author(au_field: pd.Series) -> pd.Series:
         return au_field.str.split(pat=";", n=1, expand=True)[0].str.replace(",", "")
+        
+    @staticmethod
+    def _parse_addr(input_str, is_RP=False):
+        # Parse C1 by default, parse RP if is_RP=True
+        pattern = r'\(corresponding author\), (.*?)(?:;|$)' if is_RP else r'\] (.*?)(?:\[|$)'
+
+        matches = re.findall(pattern, input_str)
+
+        i2_set = set()
+        co_set = set()
+
+        for address_part in matches:
+            lines = map(str.strip, address_part.strip().split(';'))
+
+            for line in lines:
+                if ',' in line:
+                    fields = re.split(', +', line)
+
+                    subdivision = ', '.join(fields[:2]) if len(fields) > 3 else fields[0]
+                    i2_set.add(subdivision)
+
+                    country = fields[-1]
+                    co_set.add(country)
+
+        return list(i2_set), list(co_set)
 
     @staticmethod
     def read_wos_file(file_path: Path) -> pd.DataFrame:
@@ -56,9 +81,13 @@ class ReadWosFile:
             "BP",
             "DI",
             "UT",
+            "C1",
+            "RP",
         ]
         df = read_csv_file(file_path, use_cols, "\t")
         df.insert(1, "FAU", ReadWosFile._extract_first_author(df["AU"]))
+        # parse Institution with Subdivision ('I2') and Country ('CO') from C1 column by default, same as the original Histcite
+        df[["I2", "CO"]] = df["RP"].apply(lambda x: pd.Series(ReadWosFile._parse_addr(x, False)))
         df["source file"] = file_path.name
         return df
 
