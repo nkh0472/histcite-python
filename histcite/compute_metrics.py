@@ -152,6 +152,14 @@ class ComputeMetrics:
             raise ValueError("Invalid source type")
         return self.generate_df_factory(use_cols, "C3", "; ")
 
+    def generate_institution2_df(self) -> pd.DataFrame:
+        """Return institution2 DataFrame. Only support WOS."""
+        if self._source == "wos":        
+            use_cols = ["I2", "LCS", "TC"]
+        else:
+            raise ValueError("Invalid source type")
+        return self.generate_df_factory(use_cols, "I2", "; ")
+
     def generate_journal_df(self) -> pd.DataFrame:
         """Return journal DataFrame."""
         if self._source in ["wos", "scopus"]:
@@ -216,4 +224,8 @@ class ComputeMetrics:
             if self._source in ["wos", "scopus"]:
                 self.generate_document_type_df().to_excel(
                     writer, sheet_name="Document Type"
+                )
+            if self._source in ["wos"]:
+                self.generate_institution2_df().to_excel(
+                    writer, sheet_name="Institutions2"
                 )
