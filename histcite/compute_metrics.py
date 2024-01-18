@@ -129,6 +129,14 @@ class ComputeMetrics:
             raise ValueError("Invalid source type")
         return self.generate_df_factory(use_cols, use_cols[0], "; ")
 
+    def generate_corresponding_author_df(self) -> pd.DataFrame:
+        """Return corresponding author DataFrame. Only support WOS."""
+        if self._source == "wos":        
+            use_cols = ["CAU", "LCS", "TC"]
+        else:
+            raise ValueError("Invalid source type")
+        return self.generate_df_factory(use_cols, "CAU", "; ")
+
     def generate_keyword_df(self) -> pd.DataFrame:
         """Return keyword DataFrame."""
         if self._source in ["wos", "scopus"]:
@@ -228,4 +236,7 @@ class ComputeMetrics:
             if self._source in ["wos"]:
                 self.generate_institution2_df().to_excel(
                     writer, sheet_name="Institutions2"
+                )
+                self.generate_corresponding_author_df().to_excel(
+                    writer, sheet_name="Corr Author"
                 )
