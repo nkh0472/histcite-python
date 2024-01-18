@@ -32,6 +32,21 @@ class ReadWosFile:
     @staticmethod
     def _extract_first_author(au_field: pd.Series) -> pd.Series:
         return au_field.str.split(pat=";", n=1, expand=True)[0].str.replace(",", "")
+
+    @staticmethod
+    def extract_corresponding_authors(entry):
+        if pd.isna(entry):
+            return []
+    
+        pattern = r"([^;]+)\s*\(\s*corresponding author\s*\)"
+        cau_set = set([
+            match.group(1).strip()
+            if (match := re.search(pattern, author))
+            else author.strip()
+            for author in re.split(r";\s*", entry)
+        ])
+        
+        return list(cau_set)
         
     @staticmethod
     def _parse_addr(input_str, is_RP=False):
@@ -61,6 +76,7 @@ class ReadWosFile:
 
         return list(i2_set), list(co_set)
 
+
     @staticmethod
     def read_wos_file(file_path: Path) -> pd.DataFrame:
         """Read Web of Science file and return dataframe.
@@ -89,9 +105,12 @@ class ReadWosFile:
         ]
         df = read_csv_file(file_path, use_cols, "\t")
         df.insert(1, "FAU", ReadWosFile._extract_first_author(df["AU"]))
+        df["CAU"] = df["RP"].apply(ReadWosFile.extract_corresponding_authors)
         
         # parse Institution with Subdivision ('I2') and Country ('CO') from C1 column by default, same as the original Histcite
-        df[["I2", "CO"]] = df["RP"].apply(lambda x: pd.Series(ReadWosFile._parse_addr(x, False)))
+        # df[["I2", "CO"]] = df["RP"].apply(lambda x: pd.Series(ReadWosFile._parse_addr(x, True)))
+        df[["I2", "CO"]] = df["C1"].apply(lambda x: pd.Series(ReadWosFile._parse_addr(x, False)))
+        
         df["source file"] = file_path.name
         return df
 
