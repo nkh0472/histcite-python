@@ -104,6 +104,10 @@ $ histcite /Users/.../Downloads/dataset wos --top 100 --disable_timeline
 |`TC`|Times Cited Count|
 |`J9`|Journal Abbreviation|
 |`PY`|Publication Year|
+|`CAU`|Corresponding Authors, **独有**|
+|`I2`|Institutions with Subdivision, **独有**|
+|`CO`|Country of Authors, **独有**|
+|`EM`|E-mail Address|
 |`VL`|Volume|
 |`IS`|Issue|
 |`BP`|Start Page|
