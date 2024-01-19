@@ -1,79 +1,93 @@
-def process_email_info(df):
-    # get docs_df
+def process_emails(df):
+    """
+    Iteratively find single CAU-Email pairs in the DataFrame.
+
+    Parameters:
+    - df: pandas DataFrame with columns 'CAU' and 'EM'
+
+    Returns:
+    - df: Updated DataFrame with 'CAU_u' and 'EM_u' columns reflecting processed data, contain uncertain CAUs and emails.
+    - cau_email_dict: Dictionary containing the discovered CAU-Email pairs.
+    """
+
+    def remove_known_emails(row):
+        """
+        Helper function to remove known emails based on CAU and update CAU list.
+
+        Parameters:
+        - row: DataFrame row
+
+        Returns:
+        - Tuple of updated 'CAU_u' and 'EM_u'
+        """
+        cau_u = row["CAU_u"]
+        em_u = row["EM_u"]
+
+        if isinstance(cau_u, list):
+            # Find CAUs in CAU_u that are already in the dictionary
+            # known_caus_in_row = [cau for cau in cau_u if cau in known_caus] # vectorize
+            known_caus_in_row = set(cau_u) & known_caus
+
+            if known_caus_in_row:
+                # Find known emails associated with known CAUs
+                # for cau in known_caus_in_row: # vectorize
+                #     known_emails = cau_email_dict[cau] # vectorize
+                known_emails = set().union(
+                    *(cau_email_dict[cau] for cau in known_caus_in_row)
+                )
+
+                # Remove known emails from 'EM_u'
+                em_u = [email for email in em_u if email not in known_emails]
+
+                # If any emails were removed, update CAU_u accordingly
+                if len(em_u) < len(row["EM_u"]):
+                    cau_u = [cau for cau in cau_u if cau not in known_caus_in_row]
+
+        return cau_u, em_u
+
+    def initialize_columns(df):
+        """
+        Helper function to initialize 'CAU_u' and 'EM_u' columns.
+
+        Parameters:
+        - df: DataFrame to initialize
+        """
+        df["CAU_u"] = df["CAU"]
+        df["EM_u"] = df["EM"].apply(
+            lambda x: set(re.split(r"[;,]\s*", str.strip(x))) if pd.notna(x) else set()
+        )
+
+    initialize_columns(df)
+
     cau_email_dict = {}
+    new_pairs_found_set = set()
 
-    # Step 1: Find rows with only one CAU and save the corresponding email
-    # Iterate through rows
-    for index, row in df.iterrows():
-        # Check if 'CAU' is a list with length 1 and 'EM' is not NaN
-        if (
-            isinstance(row["CAU"], list)
-            and len(row["CAU"]) == 1
-            and pd.notna(row["EM"])
-        ):
-            # Get the single CAU and corresponding email
-            cau = row["CAU"][0]
-            email = row["EM"]
-
-            # Update cau_email_dict if cau already exists
-            if cau in cau_email_dict:
-                cau_email_dict[cau] += f", {email}"
-            else:
-                cau_email_dict[cau] = email
-
-    # Step 2: Handle rows with multiple CAUs and emails
-    df["CAU_u"] = df["CAU"]
-    df["EM_u"] = df["EM"]
-    for cau, email_entry in cau_email_dict.items():
-        # Split the entry in 'EM' by ";", strip each email, and create a set for comparison
-        known_emails = set(map(str.strip, re.split(r",\s*", email_entry)))
-
-        # Remove known CAU-Email pairs from 'CAU_u' and 'EM_u'
-        df["CAU_u"] = df["CAU_u"].apply(
-            lambda x: [c for c in x if c != cau] if isinstance(x, list) else x
-        )
-        df["EM_u"] = df.apply(
-            lambda row: "; ".join(
-                [e for e in re.split(r";\s*", row["EM_u"]) if e not in known_emails]
-            )
-            if pd.notna(row["EM_u"])
-            else np.nan,
-            axis=1,
-        )
-
-    # Step 3: Find new CAU-Email pairs in 'CAU_u' and 'EM_u' and update the dictionary
     while True:
-        # Iterate through rows
-        new_pairs_found = False
+        new_pairs_found_set.clear()
+
         for index, row in df.iterrows():
-            # Check if there are remaining CAUs in 'CAU_u'
-            if isinstance(row["CAU_u"], list) and len(row["CAU_u"]) > 0:
-                if len(row["CAU_u"]) == 1:
-                    # Get the single CAU and corresponding email
-                    cau = row["CAU_u"][0]
+            if isinstance(row["CAU_u"], list) and len(row["CAU_u"]) == 1:
+                cau = row["CAU_u"][0]
 
-                    # Split the entry in 'EM_u' by ";", strip each email, and create a set for comparison
-                    known_emails = set(
-                        map(str.strip, re.split(r",\s*", str(row["EM_u"])))
-                    )
+                if cau in cau_email_dict and row["EM_u"]:
+                    cau_email_dict[cau] |= set(row["EM_u"])
+                    df.at[index, "CAU_u"] = []
+                    df.at[index, "EM_u"] = set()
+                    new_pairs_found_set.add(cau)
+                elif pd.notna(row["EM"]):
+                    cau_email_dict[cau] = set(row["EM_u"])
+                    df.at[index, "CAU_u"] = []
+                    df.at[index, "EM_u"] = set()
+                    new_pairs_found_set.add(cau)
 
-                    # Check if any remaining email in 'EM_u'
-                    remaining_emails = known_emails.copy()
-                    if known_emails:
-                        if "" in remaining_emails:
-                            remaining_emails.remove("")
-                    if remaining_emails:
-                        email = remaining_emails.pop()
-                        cau_email_dict[
-                            cau
-                        ] = f"{cau_email_dict.get(cau, '')}, {email}".lstrip(", ")
-                        df.at[index, "CAU_u"] = np.nan
-                        df.at[index, "EM_u"] = np.nan
-                        new_pairs_found = True
+        known_caus = set(cau_email_dict.keys())
+        df[["CAU_u", "EM_u"]] = df.apply(
+            remove_known_emails, axis=1, result_type="expand"
+        )
 
-        # Check if no new pairs were found or 'CAU_u' is an empty list
+        # Check if no new single CAU-Email pairs were found or 'CAU_u' is an empty list
         if (
-            not new_pairs_found
+            not new_pairs_found_set
             or df["CAU_u"]
             .apply(
                 lambda x: not isinstance(x, list)
@@ -83,5 +97,5 @@ def process_email_info(df):
         ):
             break
 
-    # return dict of CAU's email, and docs_df with uncertain CAU and email 
-    return cau_email_dict, df
+    print(f"Number of CAU-emails pair: {cau_email_dict}")
+    return df, cau_email_dict
