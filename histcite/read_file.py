@@ -102,6 +102,7 @@ class ReadWosFile:
             "UT",
             "C1",
             "RP",
+            "EM",
         ]
         df = read_csv_file(file_path, use_cols, "\t")
         df.insert(1, "FAU", ReadWosFile._extract_first_author(df["AU"]))
