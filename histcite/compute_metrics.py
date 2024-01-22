@@ -61,6 +61,10 @@ class ComputeMetrics:
             assert "TC" in use_cols, "TC must be in <use_cols> when sorting by TGCS"
 
         df = self._merged_docs_df[use_cols]
+        
+        if "CAU" in use_cols:
+            df.loc[:, 'CAU'] = df['CAU'].apply(lambda x: '; '.join(x) if isinstance(x, list) else x)
+             
         if split_char:
             df = df.dropna(subset=[col])
             df = df.astype({col: "str"})
