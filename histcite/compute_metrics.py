@@ -64,6 +64,9 @@ class ComputeMetrics:
         
         if "CAU" in use_cols:
             df.loc[:, 'CAU'] = df['CAU'].apply(lambda x: '; '.join(x) if isinstance(x, list) else x)
+
+        if "I2" in use_cols:
+            df.loc[:, 'I2'] = df['I2'].apply(lambda x: '; '.join(x) if isinstance(x, list) else x)
              
         if split_char:
             df = df.dropna(subset=[col])
