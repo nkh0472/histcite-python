@@ -34,20 +34,18 @@ class ReadWosFile:
         return au_field.str.split(pat=";", n=1, expand=True)[0].str.replace(",", "")
 
     @staticmethod
-    def extract_corresponding_authors(entry):
-        if pd.isna(entry):
-            return []
-    
-        pattern = r"([^;]+)\s*\(\s*corresponding author\s*\)"
-        cau_set = set([
-            match.group(1).strip()
-            if (match := re.search(pattern, author))
-            else author.strip()
-            for author in re.split(r";\s*", entry)
-        ])
-        
-        return list(cau_set)
-        
+    def _extract_corresponding_authors(rp_value: Optional[str]) -> Optional[str]:
+        """Extract corresponding authors from RP value."""
+        pattern = r"(?:^|\.; )(.+?)\s*\(corresponding author\)"
+        if rp_value is not None:
+            cau_list = []
+            for cau in re.findall(pattern, rp_value):
+                if "; " in cau:
+                    cau_list.extend(cau.split("; "))
+                else:
+                    cau_list.append(cau)
+        return "; ".join(set(cau_list))
+
     @staticmethod
     def _parse_addr(input_str, is_RP=False):
         # handle <NA>
