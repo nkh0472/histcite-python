@@ -7,7 +7,7 @@ Supported file types:
 """
 from pathlib import Path
 import re
-from typing import Callable, Literal
+from typing import Callable, Literal, Optional
 
 import pandas as pd
 
@@ -47,33 +47,22 @@ class ReadWosFile:
         return "; ".join(set(cau_list))
 
     @staticmethod
-    def _parse_addr(input_str, is_RP=False):
-        # handle <NA>
-        input_str = '' if pd.isna(input_str) else input_str
-        
-        # Parse C1 by default, parse RP if is_RP=True
-        pattern = r'\(corresponding author\), (.*?)(?:;|$)' if is_RP else r'\] (.*?)(?:\[|$)'
-
-        matches = re.findall(pattern, input_str)
-
-        i2_set = set()
-        co_set = set()
-
-        for address_part in matches:
-            lines = map(str.strip, address_part.strip().split(';'))
-
-            for line in lines:
-                if ',' in line:
-                    fields = [item.strip() for item in re.split(',', line)]
-
-                    subdivision = ', '.join(fields[:2]) if len(fields) > 3 else fields[0]
-                    i2_set.add(subdivision)
-
-                    country = fields[-1].rstrip('.')
-                    co_set.add(country)
-
-        return list(i2_set), list(co_set)
-
+    def _extract_i2_co(entry: Optional[str]) -> Optional[tuple[str, str]]:
+        """Extract institution with subdivision and country from C1 and RP value"""
+        if entry is not None:
+            pattern = r"\(corresponding author\), (.*?)\.(?:;|$)" if "corresponding author" in entry else r"\] (.*?)\."
+            all_addr = re.findall(pattern, entry)
+            i2_set = set()
+            co_set = set()
+            for addr in all_addr:
+                fields = addr.split(", ")
+                i2 = ", ".join(fields[:2]) if len(fields) > 3 else fields[0]
+                co = fields[-1]
+                if co[-4:] == " USA":
+                    co = "USA"
+                i2_set.add(i2)
+                co_set.add(co)
+            return "; ".join(i2_set), "; ".join(co_set)
 
     @staticmethod
     def read_wos_file(file_path: Path) -> pd.DataFrame:
@@ -103,12 +92,9 @@ class ReadWosFile:
         ]
         df = read_csv_file(file_path, use_cols, "\t")
         df.insert(1, "FAU", ReadWosFile._extract_first_author(df["AU"]))
-        df["CAU"] = df["RP"].apply(ReadWosFile.extract_corresponding_authors)
-        
-        # parse Institution with Subdivision ('I2') and Country ('CO') from C1 column by default, same as the original Histcite
-        # df[["I2", "CO"]] = df["RP"].apply(lambda x: pd.Series(ReadWosFile._parse_addr(x, True)))
-        df[["I2", "CO"]] = df["C1"].apply(lambda x: pd.Series(ReadWosFile._parse_addr(x, False)))
-        
+        df.insert(2, "CAU", df["RP"].apply(ReadWosFile._extract_corresponding_authors))
+        df[["I2 (RP)", "CO (RP)"]] = df["RP"].apply(ReadWosFile._extract_i2_co).apply(pd.Series)
+        df[["I2 (C1)", "CO (C1)"]] = df["C1"].apply(ReadWosFile._extract_i2_co).apply(pd.Series)
         df["source file"] = file_path.name
         return df
 
