@@ -14,6 +14,35 @@ from typing import Literal, Optional
 import pandas as pd
 
 
+wos_analyses_index = [
+    "Records",
+    "Authors",
+    "Journals",
+    "Keywords",
+    "Institutions",
+    "Years",
+    "Document Type",
+]
+
+cssci_analyses_index = [
+    "Records",
+    "Authors",
+    "Journals",
+    "Keywords",
+    "Institutions",
+    "Years",
+]
+
+scopus_analyses_index = [
+    "Records",
+    "Authors",
+    "Journals",
+    "Keywords",
+    "Years",
+    "Document Type",
+]
+
+
 class ComputeMetrics:
     """Compute descriptive statistics of docs."""
 
@@ -33,6 +62,17 @@ class ComputeMetrics:
             citation_relation[["doc_id", "LCR", "LCS"]], on="doc_id"
         )
         self.source: Literal["wos", "cssci", "scopus"] = source
+
+    def check_analyses_index(self) -> list[str]:
+        """Return the index of analyses."""
+        if self.source == "wos":
+            return wos_analyses_index
+        elif self.source == "cssci":
+            return cssci_analyses_index
+        elif self.source == "scopus":
+            return scopus_analyses_index
+        else:
+            raise ValueError("Invalid source type")
 
     def generate_df_factory(
         self,
