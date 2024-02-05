@@ -17,8 +17,8 @@ class ProcessFile:
             docs_df: DataFrame of docs.
             source: Data source. `wos`, `cssci` or `scopus`.
         """
-        self._docs_df: pd.DataFrame = docs_df.copy()
-        self._source: Literal["wos", "cssci", "scopus"] = source
+        self.docs_df: pd.DataFrame = docs_df.copy()
+        self.source: Literal["wos", "cssci", "scopus"] = source
 
     @staticmethod
     def _concat_refs(
@@ -51,22 +51,22 @@ class ProcessFile:
         """Extract total references and return reference dataframe."""
 
         def assign_ref_id(refs_df: pd.DataFrame) -> pd.Series:
-            if self._source == "wos":
+            if self.source == "wos":
                 check_cols = ["FAU", "PY", "J9", "BP"]
-            elif self._source == "cssci":
+            elif self.source == "cssci":
                 check_cols = ["FAU", "TI"]
-            elif self._source == "scopus":
+            elif self.source == "scopus":
                 check_cols = ["FAU", "TI"]
             else:
                 raise ValueError("Invalid source type")
             return refs_df.groupby(by=check_cols, sort=False, dropna=False).ngroup()
 
-        cr_field_series = self._docs_df["CR"]
-        if self._source == "wos":
+        cr_field_series = self.docs_df["CR"]
+        if self.source == "wos":
             refs_df = self._concat_refs(cr_field_series, "wos")
-        elif self._source == "cssci":
+        elif self.source == "cssci":
             refs_df = self._concat_refs(cr_field_series, "cssci")
-        elif self._source == "scopus":
+        elif self.source == "scopus":
             refs_df = self._concat_refs(cr_field_series, "scopus")
         else:
             raise ValueError("Invalid source type")
@@ -88,37 +88,37 @@ class ProcessFile:
 
     def process_citation(self, refs_df: pd.DataFrame) -> pd.DataFrame:
         """Return citation relationship dataframe."""
-        if self._source == "wos":
-            self._docs_df["DI"] = self._docs_df["DI"].str.lower()
+        if self.source == "wos":
+            self.docs_df["DI"] = self.docs_df["DI"].str.lower()
             cited_doc_id_series = RecognizeReference.recognize_wos_reference(
-                self._docs_df, refs_df
+                self.docs_df, refs_df
             )
 
-        elif self._source == "cssci":
-            self._docs_df["TI"] = self._docs_df["TI"].str.lower()
+        elif self.source == "cssci":
+            self.docs_df["TI"] = self.docs_df["TI"].str.lower()
             refs_df["TI"] = refs_df["TI"].str.lower()
             cited_doc_id_series = RecognizeReference.recognize_cssci_reference(
-                self._docs_df, refs_df
+                self.docs_df, refs_df
             )
 
-        elif self._source == "scopus":
-            self._docs_df["TI"] = self._docs_df["TI"].str.lower()
+        elif self.source == "scopus":
+            self.docs_df["TI"] = self.docs_df["TI"].str.lower()
             refs_df["TI"] = refs_df["TI"].str.lower()
             cited_doc_id_series = RecognizeReference.recognize_scopus_reference(
-                self._docs_df, refs_df
+                self.docs_df, refs_df
             )
 
         else:
             raise ValueError("Invalid source type")
 
-        cited_doc_id_series = cited_doc_id_series.reindex(self._docs_df["doc_id"])
+        cited_doc_id_series = cited_doc_id_series.reindex(self.docs_df["doc_id"])
         cited_doc_id_series = cited_doc_id_series.apply(
             lambda x: x if isinstance(x, list) else []
         )
         citing_doc_id_series = self._reference2citation(cited_doc_id_series)
         lcr_field = cited_doc_id_series.apply(len)
         lcs_field = citing_doc_id_series.apply(len)
-        citation_relation = pd.DataFrame({"doc_id": self._docs_df.doc_id})
+        citation_relation = pd.DataFrame({"doc_id": self.docs_df.doc_id})
         citation_relation["cited_doc_id"] = [
             ";".join([str(j) for j in i]) if i else None for i in cited_doc_id_series
         ]

@@ -20,14 +20,14 @@ class GraphViz:
             citation_relation: DataFrame of citation relationship.
             source: Data source. `wos`, `cssci` or `scopus`.
         """
-        self._empty_year_index: pd.Index = docs_df[docs_df["PY"].isna()].index
-        self._merged_docs_df: pd.DataFrame = docs_df.merge(
+        self.empty_year_index: pd.Index = docs_df[docs_df["PY"].isna()].index
+        self.merged_docs_df: pd.DataFrame = docs_df.merge(
             citation_relation,
             left_index=True,
             right_index=True,
             suffixes=(None, "_y"),
         ).drop(columns=["doc_id_y"])
-        self._source: Literal["wos", "cssci", "scopus"] = source
+        self.source: Literal["wos", "cssci", "scopus"] = source
 
     @classmethod
     def _generate_edge(
@@ -51,9 +51,9 @@ class GraphViz:
     ) -> set[tuple[int, int]]:
         def pipeline(doc_id: int):
             if edge_type == "cited":
-                cell = self._merged_docs_df.at[doc_id, "cited_doc_id"]
+                cell = self.merged_docs_df.at[doc_id, "cited_doc_id"]
             elif edge_type == "citing":
-                cell = self._merged_docs_df.at[doc_id, "citing_doc_id"]
+                cell = self.merged_docs_df.at[doc_id, "citing_doc_id"]
 
             if isinstance(cell, str):
                 related_doc_id = [int(i) for i in cell.split(";")]
@@ -76,8 +76,8 @@ class GraphViz:
     ) -> set[tuple[int, int]]:
         edge_set: set[tuple[int, int]] = set()
         for idx in doc_id_list:
-            cited_doc_id = self._merged_docs_df.loc[idx, "cited_doc_id"]
-            citing_doc_id = self._merged_docs_df.loc[idx, "citing_doc_id"]
+            cited_doc_id = self.merged_docs_df.loc[idx, "cited_doc_id"]
+            citing_doc_id = self.merged_docs_df.loc[idx, "citing_doc_id"]
             if isinstance(cited_doc_id, str):
                 edge_set.update(self._generate_edge(idx, cited_doc_id, "cited"))
             if isinstance(citing_doc_id, str):
@@ -116,12 +116,12 @@ class GraphViz:
                 )
 
         # Drop node without PY info
-        if len(self._empty_year_index) > 0 and self.show_timeline is True:
+        if len(self.empty_year_index) > 0 and self.show_timeline is True:
             edge_set = {
                 (edge[0], edge[1])
                 for edge in edge_set
-                if edge[0] not in self._empty_year_index
-                and edge[1] not in self._empty_year_index
+                if edge[0] not in self.empty_year_index
+                and edge[1] not in self.empty_year_index
             }
 
         # Build node_list according to edges
@@ -137,7 +137,7 @@ class GraphViz:
 
     def _obtain_groups(self) -> tuple[list[list[Hashable]], list[Hashable]]:
         """Obtain groups of doc_id by year."""
-        year_series = self._merged_docs_df.loc[self.node_list, "PY"]
+        year_series = self.merged_docs_df.loc[self.node_list, "PY"]
         year_groups = year_series.groupby(year_series).groups.items()
         year_list = [i[0] for i in year_groups]
         grouped_doc_id = [list(i[1]) for i in year_groups]
@@ -168,10 +168,10 @@ class GraphViz:
             self.doc_id_object = doc_id_object
         elif isinstance(doc_id_object, int):
             assert (
-                doc_id_object in self._merged_docs_df.index
+                doc_id_object in self.merged_docs_df.index
             ), "Don't specify <doc_id> not in <docs_df>."
             assert (
-                doc_id_object not in self._empty_year_index
+                doc_id_object not in self.empty_year_index
             ), "Don't specify <doc_id> without <PY> info."
             self.doc_id_object = [doc_id_object]
         self.edge_type = edge_type
@@ -230,15 +230,15 @@ class GraphViz:
         Returns:
             Dataframe of graph node info.
         """
-        if self._source == "wos":
+        if self.source == "wos":
             use_cols = ["doc_id", "AU", "TI", "PY", "SO", "LCS", "TC"]
-        elif self._source == "cssci":
+        elif self.source == "cssci":
             use_cols = ["doc_id", "AU", "TI", "PY", "SO", "LCS"]
-        elif self._source == "scopus":
+        elif self.source == "scopus":
             use_cols = ["doc_id", "AU", "TI", "PY", "SO", "LCS", "TC"]
         else:
             raise ValueError("invalid source type")
-        graph_node_info = self._merged_docs_df.loc[self.node_list, use_cols]
+        graph_node_info = self.merged_docs_df.loc[self.node_list, use_cols]
         if "TC" in graph_node_info.columns:
             graph_node_info.rename(columns={"TC": "GCS"}, inplace=True)
         return graph_node_info

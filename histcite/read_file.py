@@ -77,7 +77,7 @@ class ReadCssciFile:
         Args:
             file_path: Path of a CSSCI file. File name is similar to `LY_.txt`.
         """
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             text = f.read()
 
         body_text = text.split("\n\n\n", 1)[1]
@@ -187,25 +187,25 @@ class ReadFile:
             folder_path: The folder path of raw files.
             source: Data source. `wos`, `cssci` or `scopus`.
         """
-        self._folder_path: Path = folder_path
-        self._source: Literal["wos", "cssci", "scopus"] = source
+        self.folder_path: Path = folder_path
+        self.source: Literal["wos", "cssci", "scopus"] = source
         try:
             self._file_path_list: list[Path] = self._obtain_file_path_list()
         except FileNotFoundError:
             raise FileNotFoundError(f"{folder_path} 文件夹不存在")
 
     def _obtain_file_path_list(self) -> list[Path]:
-        if self._source == "wos":
+        if self.source == "wos":
             file_name_list = [
-                i for i in self._folder_path.iterdir() if i.name.startswith("savedrecs")
+                i for i in self.folder_path.iterdir() if i.name.startswith("savedrecs")
             ]
-        elif self._source == "cssci":
+        elif self.source == "cssci":
             file_name_list = [
-                i for i in self._folder_path.iterdir() if i.name.startswith("LY_")
+                i for i in self.folder_path.iterdir() if i.name.startswith("LY_")
             ]
-        elif self._source == "scopus":
+        elif self.source == "scopus":
             file_name_list = [
-                i for i in self._folder_path.iterdir() if i.name.startswith("scopus")
+                i for i in self.folder_path.iterdir() if i.name.startswith("scopus")
             ]
         else:
             raise ValueError("Invalid data source")
@@ -237,11 +237,11 @@ class ReadFile:
 
             if scopus, drop duplicate rows by `EID`.
             """
-            if self._source == "wos":
+            if self.source == "wos":
                 check_cols = ["UT"]
-            elif self._source == "cssci":
+            elif self.source == "cssci":
                 check_cols = ["TI", "FAU"]
-            elif self._source == "scopus":
+            elif self.source == "scopus":
                 check_cols = ["EID"]
             else:
                 raise ValueError("Invalid data source")
@@ -256,12 +256,12 @@ class ReadFile:
                 current_num = docs_df.shape[0]
                 print(f"共读取 {original_num} 条数据，去重后剩余 {current_num} 条")
 
-        if self._source == "wos":
+        if self.source == "wos":
             docs_df = self._concat_df(ReadWosFile.read_wos_file)
             docs_df = docs_df.astype({"PY": "string[pyarrow]", "BP": "string[pyarrow]"})
-        elif self._source == "cssci":
+        elif self.source == "cssci":
             docs_df = self._concat_df(ReadCssciFile.read_cssci_file)
-        elif self._source == "scopus":
+        elif self.source == "scopus":
             docs_df = self._concat_df(ReadScopusFile.read_scopus_file)
         else:
             raise ValueError("Invalid data source")
