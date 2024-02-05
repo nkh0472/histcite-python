@@ -80,7 +80,7 @@ $ histcite /Users/.../Downloads/dataset wos --top 100 --disable_timeline
 |86|段美珍; 初景利; 张冬荣; 解贺嘉|智慧图书馆的内涵特点及其认知模型研究|2021|图书情报工作|7|
 |...| | | | | |
 
-2. 使用Jupyter，比命令行更加灵活，可以自定义更多参数，查看 [demo.ipynb](demo.ipynb)
+2. 使用 Jupyter，比命令行更加灵活，可以自定义更多参数，查看 [demo.ipynb](demo.ipynb)
 
 ## 字段说明
 |Field Name|Description|
