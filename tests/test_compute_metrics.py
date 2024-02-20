@@ -1,5 +1,7 @@
-from pandas.core.frame import DataFrame
 from pathlib import Path
+
+from pandas.core.frame import DataFrame
+
 from histcite.compute_metrics import ComputeMetrics
 
 

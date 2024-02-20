@@ -5,8 +5,8 @@ Supported file types:
 - CSSCI: LY_.txt
 - Scopus: scopus.csv
 """
-from pathlib import Path
 import re
+from pathlib import Path
 from typing import Callable, Literal
 
 import pandas as pd

@@ -33,7 +33,7 @@ pip install histcite-python
 |CSSCI|从 `CSSCI数据库` 正常导出即可。|`LY_*.txt`|
 |Scopus|格式选择 `CSV` 文件，导出字段需要额外勾选 `Author keywords` 和 `Include references`，或者直接全选字段。|`scopus*.csv`|
 
-> [!WARNING]  
+> [!WARNING]
 > 文件下载后不要重命名(会根据文件名识别有效的题录数据文件)，把下载的所有文件放在一个单独的文件夹内。
 
 ## 使用方法
@@ -59,10 +59,10 @@ options:
 $ histcite /Users/.../Downloads/dataset wos --top 100 --disable_timeline
 ```
 
-> [!NOTE]  
-> 生成的结果保存在 `folder_path` 下的 `result` 文件夹内，包含  
-> - 描述统计表 descriptive_statistics.xlsx  
-> - 引文网络图节点信息表 graph_node_info.xlsx  
+> [!NOTE]
+> 生成的结果保存在 `folder_path` 下的 `result` 文件夹内，包含
+> - 描述统计表 descriptive_statistics.xlsx
+> - 引文网络图节点信息表 graph_node_info.xlsx
 > - 引文网络图的数据文件 graph.dot
 >     - 借助 [Graphviz在线编辑器](http://magjac.com/graphviz-visual-editor/) 或下载到本地的 [Graphviz工具](https://graphviz.org/) 生成引文网络图。
 

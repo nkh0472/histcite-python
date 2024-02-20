@@ -1,5 +1,5 @@
-from pandas.core.frame import DataFrame
 import pytest
+from pandas.core.frame import DataFrame
 
 from histcite.network_graph import GraphViz
 
