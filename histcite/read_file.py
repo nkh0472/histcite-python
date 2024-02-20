@@ -5,6 +5,7 @@ Supported file types:
 - CSSCI: LY_.txt
 - Scopus: scopus.csv
 """
+
 import re
 from pathlib import Path
 from typing import Callable, Literal
@@ -196,25 +197,17 @@ class ReadFile:
 
     def _obtain_file_path_list(self) -> list[Path]:
         if self.source == "wos":
-            file_name_list = [
-                i for i in self.folder_path.iterdir() if i.name.startswith("savedrecs")
-            ]
+            file_name_list = [i for i in self.folder_path.iterdir() if i.name.startswith("savedrecs")]
         elif self.source == "cssci":
-            file_name_list = [
-                i for i in self.folder_path.iterdir() if i.name.startswith("LY_")
-            ]
+            file_name_list = [i for i in self.folder_path.iterdir() if i.name.startswith("LY_")]
         elif self.source == "scopus":
-            file_name_list = [
-                i for i in self.folder_path.iterdir() if i.name.startswith("scopus")
-            ]
+            file_name_list = [i for i in self.folder_path.iterdir() if i.name.startswith("scopus")]
         else:
             raise ValueError("Invalid data source")
         file_name_list.sort()
         return file_name_list
 
-    def _concat_df(
-        self, read_file_func: Callable[[Path], pd.DataFrame]
-    ) -> pd.DataFrame:
+    def _concat_df(self, read_file_func: Callable[[Path], pd.DataFrame]) -> pd.DataFrame:
         file_count = len(self._file_path_list)
         if file_count > 1:
             return pd.concat(
@@ -247,9 +240,7 @@ class ReadFile:
                 raise ValueError("Invalid data source")
             original_num = docs_df.shape[0]
             try:
-                docs_df.drop_duplicates(
-                    subset=check_cols, ignore_index=True, inplace=True
-                )
+                docs_df.drop_duplicates(subset=check_cols, ignore_index=True, inplace=True)
             except Exception:
                 print(f"共读取 {original_num} 条数据")
             else:

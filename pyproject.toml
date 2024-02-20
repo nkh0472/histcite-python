@@ -4,14 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "histcite-python"
-authors = [
-    {name = "WangK2", email = "kw221225@gmail.com"}
-    ]
+authors = [{name = "WangK2", email = "kw221225@gmail.com"}]
 description = "A Python interface for histcite"
 license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.9"
-keywords = ["histcite",
+keywords = [
+    "histcite",
     "citation network",
     "web of science",
     "scopus",
@@ -29,21 +28,23 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering :: Information Analysis",
+    "Typing :: Typed",
     ]
+dynamic = ["version"]
+
 dependencies = [
     "pandas>=2.0",
     "pyarrow",
     "openpyxl",
     ]
-dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
-    "coverage",
     "black",
+    "coverage",
     "mypy",
     "pre-commit",
+    "pytest",
     ]
 
 [project.scripts]
@@ -60,3 +61,6 @@ version = {attr = "histcite.__version__"}
 
 [tool.coverage.run]
 source = ["histcite"]
+
+[tool.black]
+line-length = 120

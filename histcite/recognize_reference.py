@@ -1,4 +1,5 @@
 """This module used to recognize local references of a doc."""
+
 from typing import Optional
 
 import pandas as pd
@@ -36,9 +37,9 @@ class RecognizeReference:
 
         docs_df = docs_df[["doc_id"] + compare_cols]
         refs_df = refs_df[["doc_id", "ref_index"] + compare_cols]
-        shared_df = pd.merge(
-            refs_df, docs_df, how="left", on=compare_cols, suffixes=("_x", "_y")
-        ).dropna(subset="doc_id_y")
+        shared_df = pd.merge(refs_df, docs_df, how="left", on=compare_cols, suffixes=("_x", "_y")).dropna(
+            subset="doc_id_y"
+        )
         shared_df = shared_df.astype({"doc_id_y": "int64"})
         cited_refs_series = shared_df.groupby("doc_id_x")["doc_id_y"].apply(list)
         cited_refs_series = cited_refs_series.apply(lambda x: sorted(x))
@@ -46,9 +47,7 @@ class RecognizeReference:
         return cited_refs_series
 
     @staticmethod
-    def recognize_wos_reference(
-        docs_df: pd.DataFrame, refs_df: pd.DataFrame
-    ) -> pd.Series:
+    def recognize_wos_reference(docs_df: pd.DataFrame, refs_df: pd.DataFrame) -> pd.Series:
         """Recognize local references of docs from Web of Science.
 
         If `DOI` exists, use `DOI` to recognize references.
@@ -62,9 +61,7 @@ class RecognizeReference:
             A Series of lists, each list contains the indexes of local references.
         """
 
-        def _merge_lists(
-            list1: Optional[list[int]], list2: Optional[list[int]]
-        ) -> Optional[list[int]]:
+        def _merge_lists(list1: Optional[list[int]], list2: Optional[list[int]]) -> Optional[list[int]]:
             if isinstance(list1, list) and isinstance(list2, list):
                 return list1 + list2
             else:
@@ -77,9 +74,7 @@ class RecognizeReference:
 
         # DOI exists
         compare_cols_doi = ["DI"]
-        result_doi = RecognizeReference.recognize_refs_factory(
-            docs_df, refs_df, compare_cols_doi
-        )
+        result_doi = RecognizeReference.recognize_refs_factory(docs_df, refs_df, compare_cols_doi)
 
         # DOI not exists
         compare_cols = ["FAU", "PY", "J9", "BP"]
@@ -91,9 +86,7 @@ class RecognizeReference:
         return cited_refs_series
 
     @staticmethod
-    def recognize_cssci_reference(
-        docs_df: pd.DataFrame, refs_df: pd.DataFrame
-    ) -> pd.Series:
+    def recognize_cssci_reference(docs_df: pd.DataFrame, refs_df: pd.DataFrame) -> pd.Series:
         """Recognize local references of docs from CSSCI.
 
         Use `FAU`, `TI` to recognize references.
@@ -109,9 +102,7 @@ class RecognizeReference:
         return RecognizeReference.recognize_refs_factory(docs_df, refs_df, compare_cols)
 
     @staticmethod
-    def recognize_scopus_reference(
-        docs_df: pd.DataFrame, refs_df: pd.DataFrame
-    ) -> pd.Series:
+    def recognize_scopus_reference(docs_df: pd.DataFrame, refs_df: pd.DataFrame) -> pd.Series:
         """Recognize local references of docs from Scopus.
 
         Use `FAU`, `TI` to recognize references.
@@ -124,6 +115,4 @@ class RecognizeReference:
             A Series of lists, each list contains the indexes of local references.
         """
         compare_cols = ["FAU", "TI"]
-        return RecognizeReference.recognize_refs_factory(
-            docs_df, refs_df, compare_cols, drop_duplicates=True
-        )
+        return RecognizeReference.recognize_refs_factory(docs_df, refs_df, compare_cols, drop_duplicates=True)
