@@ -9,9 +9,7 @@ from .recognize_reference import RecognizeReference
 class ProcessFile:
     """Process docs file, extract references and citation relationship."""
 
-    def __init__(
-        self, docs_df: pd.DataFrame, source: Literal["wos", "cssci", "scopus"]
-    ):
+    def __init__(self, docs_df: pd.DataFrame, source: Literal["wos", "cssci", "scopus"]):
         """
         Args:
             docs_df: DataFrame of docs.
@@ -90,38 +88,28 @@ class ProcessFile:
         """Return citation relationship dataframe."""
         if self.source == "wos":
             self.docs_df["DI"] = self.docs_df["DI"].str.lower()
-            cited_doc_id_series = RecognizeReference.recognize_wos_reference(
-                self.docs_df, refs_df
-            )
+            cited_doc_id_series = RecognizeReference.recognize_wos_reference(self.docs_df, refs_df)
 
         elif self.source == "cssci":
             self.docs_df["TI"] = self.docs_df["TI"].str.lower()
             refs_df["TI"] = refs_df["TI"].str.lower()
-            cited_doc_id_series = RecognizeReference.recognize_cssci_reference(
-                self.docs_df, refs_df
-            )
+            cited_doc_id_series = RecognizeReference.recognize_cssci_reference(self.docs_df, refs_df)
 
         elif self.source == "scopus":
             self.docs_df["TI"] = self.docs_df["TI"].str.lower()
             refs_df["TI"] = refs_df["TI"].str.lower()
-            cited_doc_id_series = RecognizeReference.recognize_scopus_reference(
-                self.docs_df, refs_df
-            )
+            cited_doc_id_series = RecognizeReference.recognize_scopus_reference(self.docs_df, refs_df)
 
         else:
             raise ValueError("Invalid source type")
 
         cited_doc_id_series = cited_doc_id_series.reindex(self.docs_df["doc_id"])
-        cited_doc_id_series = cited_doc_id_series.apply(
-            lambda x: x if isinstance(x, list) else []
-        )
+        cited_doc_id_series = cited_doc_id_series.apply(lambda x: x if isinstance(x, list) else [])
         citing_doc_id_series = self._reference2citation(cited_doc_id_series)
         lcr_field = cited_doc_id_series.apply(len)
         lcs_field = citing_doc_id_series.apply(len)
         citation_relation = pd.DataFrame({"doc_id": self.docs_df.doc_id})
-        citation_relation["cited_doc_id"] = [
-            ";".join([str(j) for j in i]) if i else None for i in cited_doc_id_series
-        ]
+        citation_relation["cited_doc_id"] = [";".join([str(j) for j in i]) if i else None for i in cited_doc_id_series]
         citation_relation["citing_doc_id"] = [
             ";".join([str(j) for j in i]) if i else None for i in citing_doc_id_series
         ]

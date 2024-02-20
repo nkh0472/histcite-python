@@ -1,4 +1,5 @@
 """This module is used to generate network graph in dot language."""
+
 from pathlib import Path
 from typing import Hashable, Literal, Optional, Union
 
@@ -59,9 +60,7 @@ class GraphViz:
                 related_doc_id = [int(i) for i in cell.split(";")]
                 if related_doc_id is not None:
                     pending_doc_id.extend(related_doc_id)
-                    edge_set.update(
-                        self._generate_edge(doc_id, related_doc_id, edge_type)
-                    )
+                    edge_set.update(self._generate_edge(doc_id, related_doc_id, edge_type))
 
         edge_set: set[tuple[int, int]] = set()
         pending_doc_id: list[int] = []
@@ -71,9 +70,7 @@ class GraphViz:
             pipeline(current_doc_id)
         return edge_set
 
-    def _generate_edge_set_from_multi_doc(
-        self, doc_id_list: list[int]
-    ) -> set[tuple[int, int]]:
+    def _generate_edge_set_from_multi_doc(self, doc_id_list: list[int]) -> set[tuple[int, int]]:
         edge_set: set[tuple[int, int]] = set()
         for idx in doc_id_list:
             cited_doc_id = self.merged_docs_df.loc[idx, "cited_doc_id"]
@@ -82,11 +79,7 @@ class GraphViz:
                 edge_set.update(self._generate_edge(idx, cited_doc_id, "cited"))
             if isinstance(citing_doc_id, str):
                 edge_set.update(self._generate_edge(idx, citing_doc_id, "citing"))
-        edge_set = {
-            (edge[0], edge[1])
-            for edge in edge_set
-            if edge[0] in doc_id_list and edge[1] in doc_id_list
-        }
+        edge_set = {(edge[0], edge[1]) for edge in edge_set if edge[0] in doc_id_list and edge[1] in doc_id_list}
         return edge_set
 
     def _generate_edge_set(self) -> dict[int, list[int]]:
@@ -96,32 +89,21 @@ class GraphViz:
             initial_doc_id = self.doc_id_object[0]
 
             if self.edge_type == "cited":
-                edge_set = self._generate_edge_set_from_specific_doc(
-                    initial_doc_id, "cited"
-                )
+                edge_set = self._generate_edge_set_from_specific_doc(initial_doc_id, "cited")
             elif self.edge_type == "citing":
-                edge_set = self._generate_edge_set_from_specific_doc(
-                    initial_doc_id, "citing"
-                )
+                edge_set = self._generate_edge_set_from_specific_doc(initial_doc_id, "citing")
             elif self.edge_type is None:
-                edge_set = self._generate_edge_set_from_specific_doc(
-                    initial_doc_id, "cited"
-                )
-                edge_set.update(
-                    self._generate_edge_set_from_specific_doc(initial_doc_id, "citing")
-                )
+                edge_set = self._generate_edge_set_from_specific_doc(initial_doc_id, "cited")
+                edge_set.update(self._generate_edge_set_from_specific_doc(initial_doc_id, "citing"))
             else:
-                raise ValueError(
-                    'Argument <edge_type> must be one of "cited", "citing" or None'
-                )
+                raise ValueError('Argument <edge_type> must be one of "cited", "citing" or None')
 
         # Drop node without PY info
         if len(self.empty_year_index) > 0 and self.show_timeline is True:
             edge_set = {
                 (edge[0], edge[1])
                 for edge in edge_set
-                if edge[0] not in self.empty_year_index
-                and edge[1] not in self.empty_year_index
+                if edge[0] not in self.empty_year_index and edge[1] not in self.empty_year_index
             }
 
         # Build node_list according to edges
@@ -162,17 +144,11 @@ class GraphViz:
             Dot file content.
         """
         if isinstance(doc_id_object, list) and len(doc_id_object) > 1:
-            assert (
-                edge_type is None
-            ), "Argument <edge_type> should be None if <doc_id_object> contains >1 elements."
+            assert edge_type is None, "Argument <edge_type> should be None if <doc_id_object> contains >1 elements."
             self.doc_id_object = doc_id_object
         elif isinstance(doc_id_object, int):
-            assert (
-                doc_id_object in self.merged_docs_df.index
-            ), "Don't specify <doc_id> not in <docs_df>."
-            assert (
-                doc_id_object not in self.empty_year_index
-            ), "Don't specify <doc_id> without <PY> info."
+            assert doc_id_object in self.merged_docs_df.index, "Don't specify <doc_id> not in <docs_df>."
+            assert doc_id_object not in self.empty_year_index, "Don't specify <doc_id> without <PY> info."
             self.doc_id_object = [doc_id_object]
         self.edge_type = edge_type
         self.show_timeline = show_timeline
@@ -181,14 +157,10 @@ class GraphViz:
         grouped_doc_id, year_list = self._obtain_groups()
 
         dot_groups = [
-            f'\t{{rank=same; {" ".join([str(i) for i in group_index])}}};\n'
-            for group_index in grouped_doc_id
+            f'\t{{rank=same; {" ".join([str(i) for i in group_index])}}};\n' for group_index in grouped_doc_id
         ]
         dot_edge_list = [
-            f"\t{source} -> "
-            + "{ "
-            + " ".join([str(i) for i in edge_dict[source]])
-            + " };\n"
+            f"\t{source} -> " + "{ " + " ".join([str(i) for i in edge_dict[source]]) + " };\n"
             for source in edge_dict.keys()
         ]
 
@@ -199,13 +171,8 @@ class GraphViz:
                 for idx, year in enumerate(reversed_year_list)
                 if idx < len(reversed_year_list) - 1
             ]
-            dot_year_node_list = [
-                f'\t{year} [ shape="plaintext" ];\n' for year in year_list
-            ]
-            dot_year_edge_list = [
-                f"\t{edge[0]} -> {edge[1]} [ style = invis ];\n"
-                for edge in year_edge_list
-            ]
+            dot_year_node_list = [f'\t{year} [ shape="plaintext" ];\n' for year in year_list]
+            dot_year_edge_list = [f"\t{edge[0]} -> {edge[1]} [ style = invis ];\n" for edge in year_edge_list]
         else:
             dot_year_node_list, dot_year_edge_list = [], []
 

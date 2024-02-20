@@ -8,6 +8,7 @@ Supported statistic units:
 - Publication year
 - Document type
 """
+
 from pathlib import Path
 from typing import Literal, Optional
 
@@ -57,9 +58,7 @@ class ComputeMetrics:
             citation_relation: DataFrame of citation relationship.
             source: Data source. `wos`, `cssci` or `scopus`.
         """
-        self.merged_docs_df: pd.DataFrame = docs_df.merge(
-            citation_relation[["doc_id", "LCR", "LCS"]], on="doc_id"
-        )
+        self.merged_docs_df: pd.DataFrame = docs_df.merge(citation_relation[["doc_id", "LCR", "LCS"]], on="doc_id")
         self.source: Literal["wos", "cssci", "scopus"] = source
 
     def check_analyses_index(self) -> list[str]:
@@ -111,17 +110,13 @@ class ComputeMetrics:
 
         if "LCS" in use_cols:
             if "TC" in use_cols:
-                grouped_df = df.groupby(col).agg(
-                    {col: "count", "LCS": "sum", "TC": "sum"}
-                )
+                grouped_df = df.groupby(col).agg({col: "count", "LCS": "sum", "TC": "sum"})
             else:
                 grouped_df = df.groupby(col).agg({col: "count", "LCS": "sum"})
         else:
             grouped_df = df.groupby(col).agg({col: "count"})
 
-        grouped_df.rename(
-            columns={col: "Recs", "LCS": "TLCS", "TC": "TGCS"}, inplace=True
-        )
+        grouped_df.rename(columns={col: "Recs", "LCS": "TLCS", "TC": "TGCS"}, inplace=True)
         # e.g. Andersson, Gerhard (7202645907)
         if col == "Author full names":
             grouped_df.index = grouped_df.index.str.replace(r" \(\d+\)", "", regex=True)
@@ -180,9 +175,7 @@ class ComputeMetrics:
 
     def generate_institution_df(self) -> pd.DataFrame:
         """Return institution DataFrame. Not support Scopus."""
-        assert (
-            self.source != "scopus"
-        ), "Scopus is not supported to analyze <institution> field yet."
+        assert self.source != "scopus", "Scopus is not supported to analyze <institution> field yet."
         if self.source == "wos":
             use_cols = ["C3", "LCS", "TC"]
         elif self.source == "cssci":
@@ -240,19 +233,13 @@ class ComputeMetrics:
         """
         Path.mkdir(save_path.parent, exist_ok=True)
         with pd.ExcelWriter(save_path) as writer:
-            self.generate_record_df().to_excel(
-                writer, sheet_name="Records", index=False
-            )
+            self.generate_record_df().to_excel(writer, sheet_name="Records", index=False)
             self.generate_author_df().to_excel(writer, sheet_name="Authors")
             self.generate_journal_df().to_excel(writer, sheet_name="Journals")
             self.generate_keyword_df().to_excel(writer, sheet_name="Keywords")
             self.generate_year_df().to_excel(writer, sheet_name="Years")
 
             if self.source in ["wos", "cssci"]:
-                self.generate_institution_df().to_excel(
-                    writer, sheet_name="Institutions"
-                )
+                self.generate_institution_df().to_excel(writer, sheet_name="Institutions")
             if self.source in ["wos", "scopus"]:
-                self.generate_document_type_df().to_excel(
-                    writer, sheet_name="Document Type"
-                )
+                self.generate_document_type_df().to_excel(writer, sheet_name="Document Type")

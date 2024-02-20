@@ -61,16 +61,12 @@ def cli():
         )
 
     elif args.threshold is not None:
-        doc_id_list = citation_relation[
-            citation_relation["LCS"] >= args.threshold
-        ].index.tolist()
+        doc_id_list = citation_relation[citation_relation["LCS"] >= args.threshold].index.tolist()
 
     else:
         raise ValueError("<top> or <threshold> must be specified.")
 
-    graph_dot_file = graph.generate_dot_file(
-        doc_id_list, show_timeline=args.disable_timeline
-    )
+    graph_dot_file = graph.generate_dot_file(doc_id_list, show_timeline=args.disable_timeline)
     graph_dot_path = output_path / "graph.dot"
     with open(graph_dot_path, "w") as f:
         f.write(graph_dot_file)

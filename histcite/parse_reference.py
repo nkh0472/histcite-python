@@ -5,6 +5,7 @@ Supported source type:
 - CSSCI
 - Scopus
 """
+
 import re
 from typing import Any, Iterator, Literal, NamedTuple, Optional
 
@@ -357,9 +358,7 @@ class ParseReference:
                     TI = ref.replace(f", {SO}", "")
 
                 # Match title
-                elif TI_match := re.search(
-                    r"^(([^\.\s]+ ){3,}[^\.\sA-Z]+), [A-Z]", ref
-                ):
+                elif TI_match := re.search(r"^(([^\.\s]+ ){3,}[^\.\sA-Z]+), [A-Z]", ref):
                     TI = TI_match[1]
                     SO = ref.replace(f"{TI}, ", "")
 
