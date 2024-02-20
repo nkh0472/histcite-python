@@ -3,8 +3,8 @@ from typing import Literal
 
 import pytest
 
-from histcite.read_file import ReadFile
 from histcite.process_file import ProcessFile
+from histcite.read_file import ReadFile
 
 
 def obtain_docs_df(source: Literal["wos", "cssci", "scopus"]):

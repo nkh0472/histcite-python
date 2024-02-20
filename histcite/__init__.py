@@ -20,8 +20,8 @@ __all__ = [
     "RecognizeReference",
 ]
 
-import sys
 import platform
+import sys
 from importlib.metadata import version
 
 

@@ -1,6 +1,5 @@
 from histcite.parse_reference import ParseReference
 
-
 wos_ref_cell = "Bengio Y, 2001, ADV NEUR IN, V13, P932; Chang Y, 2003, IEEE INTERNATIONAL WORKSHOP ON ANALYSIS AND MODELING OF FACE AND GESTURES, P28; Chen Z., 2000, 6 INT C SPOK LANG PR; CORTES C, 1995, MACH LEARN, V20, P273, DOI 10.1007/BF00994018"
 cssci_ref = "1.严栋.基于物联网的智慧图书馆.图书馆学刊.2010.32(7)"
 scopus_ref = "Negri E, Fumagalli L, Macchi M., A Review of the Roles of Digital Twin in CPS-based Production Systems, Procedia Manufacturing, 11, pp. 939-948, (2017)"

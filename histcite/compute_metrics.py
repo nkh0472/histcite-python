@@ -13,7 +13,6 @@ from typing import Literal, Optional
 
 import pandas as pd
 
-
 wos_analyses_index = [
     "Records",
     "Authors",
