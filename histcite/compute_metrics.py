@@ -77,7 +77,7 @@ class ComputeMetrics:
         use_cols: list[str],
         col: str,
         split_char: Optional[str] = None,
-        str_lower: bool = False,
+        lower_case: bool = False,
         sort_by_col: Literal["Recs", "TLCS", "TGCS"] = "Recs",
     ) -> pd.DataFrame:
         """A factory method to generate DataFrame of specific field.
@@ -86,7 +86,7 @@ class ComputeMetrics:
             use_cols: Columns to use. e.g. `["AU", "LCS", "TC"]`.
             col: Column to analyze. e.g. `AU`.
             split_char: Whether to split string. e.g. `; `. Default None.
-            str_lower: Whether to convert string to lowercase. Default False.
+            lower_case: Whether to convert string to lowercase. Default False.
             sort_by_col: Sort DataFrame by column. `Recs`, `TLCS` or `TGCS`. Default `Recs`.
 
         Returns:
@@ -98,12 +98,10 @@ class ComputeMetrics:
         elif sort_by_col == "TGCS":
             assert "TC" in use_cols, "TC must be in <use_cols> when sorting by TGCS"
 
-        df = self.merged_docs_df[use_cols]
+        df = self.merged_docs_df[use_cols].dropna(subset=[col])
+        if lower_case:
+            df[col] = df[col].str.lower()
         if split_char:
-            df = df.dropna(subset=[col])
-            df = df.astype({col: "str"})
-            if str_lower:
-                df[col] = df[col].str.lower()
             df[col] = df[col].str.split(split_char)
             df = df.explode(col)
             df = df.reset_index(drop=True)
@@ -204,23 +202,6 @@ class ComputeMetrics:
         assert self.source != "cssci", "CSSCI doesn't have <document type> info"
         use_cols = ["DT"]
         return self.generate_df_factory(use_cols, "DT")
-
-    # def generate_reference_df(self):
-    #     """Generate reference DataFrame. The `local` field means whether the reference is in the downloaded records."""
-    #     assert self.refs_df is not None, "Argument <refs_df> can't be None"
-    #     if self.source == "wos":
-    #         keys = ["FAU", "PY", "J9", "VL", "BP", "DI", "local"]
-    #     elif self.source == "cssci":
-    #         keys = ["FAU", "TI", "SO", "PY", "VL", "local"]
-    #     elif self.source == "scopus":
-    #         keys = ["FAU", "TI", "SO", "VL", "BP", "EP", "PY", "local"]
-    #     else:
-    #         raise ValueError("Invalid source type")
-    #     refs_df = (
-    #         self.refs_df.groupby(by=keys, dropna=False).size().reset_index(name="Recs")
-    #     )
-    #     refs_df.insert(len(refs_df.columns) - 1, "local", refs_df.pop("local"))
-    #     return refs_df.sort_values(by="Recs", ascending=False)
 
     def write2excel(self, save_path: Path):
         """Write all dataframes to an excel file. Each dataframe is a sheet.

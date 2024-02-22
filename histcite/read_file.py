@@ -31,7 +31,7 @@ def read_csv_file(file_path: Path, use_cols: list[str], sep: str = ",") -> pd.Da
 
 class ReadWosFile:
     @staticmethod
-    def _extract_first_author(au_field: pd.Series) -> pd.Series:
+    def extract_first_author(au_field: pd.Series) -> pd.Series:
         return au_field.str.split(pat=";", n=1, expand=True)[0].str.replace(",", "")
 
     @staticmethod
@@ -59,17 +59,16 @@ class ReadWosFile:
             "UT",
         ]
         df = read_csv_file(file_path, use_cols, "\t")
-        df.insert(1, "FAU", ReadWosFile._extract_first_author(df["AU"]))
+        df.insert(1, "FAU", ReadWosFile.extract_first_author(df["AU"]))
         df["source file"] = file_path.name
         return df
 
 
 class ReadCssciFile:
     @staticmethod
-    def _extract_org(org_cell: str) -> str:
+    def extract_org(org_cell: str) -> str:
         org_set = set(re.findall(r"](.*?)(?:/|$)", org_cell))
-        org_list = [i.replace(".", "") for i in org_set]
-        return "; ".join(org_list)
+        return "; ".join([i.replace(".", "") for i in org_set])
 
     @staticmethod
     def read_cssci_file(file_path: Path) -> pd.DataFrame:
@@ -120,7 +119,7 @@ class ReadCssciFile:
         df["AU"] = df["AU"].str.replace("/", "; ")
         df["DE"] = df["DE"].str.replace("/", "; ")
         df["PY"] = df["PY&VL&BP&EP"].str.extract(r"^(\d{4}),", expand=False)
-        df["C3"] = df["C3"].apply(ReadCssciFile._extract_org)
+        df["C3"] = df["C3"].apply(ReadCssciFile.extract_org)
         df["CR"] = df["CR"].str.replace("\n", "; ")
         df["NR"] = df["CR"].str.count("; ") + 1
         df.insert(2, "FAU", df.pop("FAU"))
@@ -191,11 +190,11 @@ class ReadFile:
         self.folder_path: Path = folder_path
         self.source: Literal["wos", "cssci", "scopus"] = source
         try:
-            self._file_path_list: list[Path] = self._obtain_file_path_list()
+            self.file_path_list: list[Path] = self.obtain_file_path_list()
         except FileNotFoundError:
             raise FileNotFoundError(f"{folder_path} 文件夹不存在")
 
-    def _obtain_file_path_list(self) -> list[Path]:
+    def obtain_file_path_list(self) -> list[Path]:
         if self.source == "wos":
             file_name_list = [i for i in self.folder_path.iterdir() if i.name.startswith("savedrecs")]
         elif self.source == "cssci":
@@ -207,15 +206,15 @@ class ReadFile:
         file_name_list.sort()
         return file_name_list
 
-    def _concat_df(self, read_file_func: Callable[[Path], pd.DataFrame]) -> pd.DataFrame:
-        file_count = len(self._file_path_list)
+    def concat_df(self, read_file_func: Callable[[Path], pd.DataFrame]) -> pd.DataFrame:
+        file_count = len(self.file_path_list)
         if file_count > 1:
             return pd.concat(
-                [read_file_func(file_path) for file_path in self._file_path_list],
+                [read_file_func(file_path) for file_path in self.file_path_list],
                 ignore_index=True,
             )
         elif file_count == 1:
-            return read_file_func(self._file_path_list[0])
+            return read_file_func(self.file_path_list[0])
         else:
             raise FileNotFoundError("No valid file in the folder")
 
@@ -248,14 +247,14 @@ class ReadFile:
                 print(f"共读取 {original_num} 条数据，去重后剩余 {current_num} 条")
 
         if self.source == "wos":
-            docs_df = self._concat_df(ReadWosFile.read_wos_file)
-            docs_df = docs_df.astype({"PY": "string[pyarrow]", "BP": "string[pyarrow]"})
+            docs_df = self.concat_df(ReadWosFile.read_wos_file)
         elif self.source == "cssci":
-            docs_df = self._concat_df(ReadCssciFile.read_cssci_file)
+            docs_df = self.concat_df(ReadCssciFile.read_cssci_file)
         elif self.source == "scopus":
-            docs_df = self._concat_df(ReadScopusFile.read_scopus_file)
+            docs_df = self.concat_df(ReadScopusFile.read_scopus_file)
         else:
             raise ValueError("Invalid data source")
         drop_duplicate_rows()
         docs_df.insert(0, "doc_id", docs_df.index)
+        docs_df = docs_df.convert_dtypes(dtype_backend="pyarrow")
         return docs_df

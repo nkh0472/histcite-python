@@ -30,20 +30,25 @@ class RecognizeReference:
         refs_df = refs_df.dropna(subset=compare_cols)
 
         if drop_duplicates is True:
-            try:
-                docs_df = docs_df.drop_duplicates(subset=compare_cols)
-            except Exception:
-                pass
+            docs_df = docs_df.drop_duplicates(subset=compare_cols)
 
-        docs_df = docs_df[["doc_id"] + compare_cols]
-        refs_df = refs_df[["doc_id", "ref_index"] + compare_cols]
-        shared_df = pd.merge(refs_df, docs_df, how="left", on=compare_cols, suffixes=("_x", "_y")).dropna(
+        # Type convert
+        lower_case_cols = [col for col in compare_cols if docs_df[col].dtype != "string[pyarrow]"]
+        if lower_case_cols:
+            docs_df = docs_df.astype({col: "string[pyarrow]" for col in lower_case_cols})
+
+        # Lower case convert
+        for col in compare_cols:
+            if col not in ["PY"]:
+                docs_df.loc[:, col] = docs_df[col].str.lower()
+                refs_df.loc[:, col] = refs_df[col].str.lower()
+
+        child_docs_df = docs_df[["doc_id"] + compare_cols]
+        child_refs_df = refs_df[["doc_id", "ref_index"] + compare_cols]
+        shared_df = pd.merge(child_refs_df, child_docs_df, how="left", on=compare_cols, suffixes=("_x", "_y")).dropna(
             subset="doc_id_y"
         )
-        shared_df = shared_df.astype({"doc_id_y": "int64"})
         cited_refs_series = shared_df.groupby("doc_id_x")["doc_id_y"].apply(list)
-        cited_refs_series = cited_refs_series.apply(lambda x: sorted(x))
-        # local_refs_series = shared_df["ref_index"].reset_index(drop=True)
         return cited_refs_series
 
     @staticmethod
@@ -61,28 +66,25 @@ class RecognizeReference:
             A Series of lists, each list contains the indexes of local references.
         """
 
-        def _merge_lists(list1: Optional[list[int]], list2: Optional[list[int]]) -> Optional[list[int]]:
-            if isinstance(list1, list) and isinstance(list2, list):
-                return list1 + list2
-            else:
-                if isinstance(list1, list):
-                    return list1
-                elif isinstance(list2, list):
-                    return list2
-                else:
-                    return None
+        def merge_list(a: Optional[list[int]], b: Optional[list[int]]) -> Optional[list[int]]:
+            c = set()
+            if isinstance(a, list):
+                c.update(a)
+            if isinstance(b, list):
+                c.update(b)
+            if c:
+                return list(c)
 
         # DOI exists
-        compare_cols_doi = ["DI"]
-        result_doi = RecognizeReference.recognize_refs_factory(docs_df, refs_df, compare_cols_doi)
+        compare_cols = ["DI"]
+        result_from_doi = RecognizeReference.recognize_refs_factory(
+            docs_df[docs_df["DI"].notna()], refs_df[refs_df["DI"].notna()], compare_cols
+        )
 
         # DOI not exists
         compare_cols = ["FAU", "PY", "J9", "BP"]
-        result = RecognizeReference.recognize_refs_factory(
-            docs_df[docs_df["DI"].isna()], refs_df[refs_df["DI"].isna()], compare_cols
-        )
-        cited_refs_series = result_doi.combine(result, _merge_lists)
-        # local_refs_series = pd.concat([result_doi[1], result[1]])
+        result_from_fields = RecognizeReference.recognize_refs_factory(docs_df, refs_df, compare_cols)
+        cited_refs_series = result_from_doi.combine(result_from_fields, merge_list)
         return cited_refs_series
 
     @staticmethod

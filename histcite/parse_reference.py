@@ -7,7 +7,7 @@ Supported source type:
 """
 
 import re
-from typing import Any, Iterator, Literal, NamedTuple, Optional
+from typing import Any, Literal, NamedTuple, Optional
 
 
 class WosField(NamedTuple):
@@ -369,7 +369,7 @@ class ParseReference:
                     return None
         return ScopusField(FAU, TI, SO, VL, IS, BP, EP, PY)
 
-    def parse_one_ref(
+    def parse_ref(
         self,
         ref: str,
         source: Literal["wos", "cssci", "scopus"],
@@ -383,7 +383,7 @@ class ParseReference:
             doc_id: doc_id to which the reference cell belongs. Default None.
 
         Returns:
-            Parsed reference as a dict.
+            A dict of the parsed reference.
         """
 
         def tuple2dict(x: Optional[NamedTuple]):
@@ -409,7 +409,7 @@ class ParseReference:
         ref_cell: str,
         source: Literal["wos", "cssci", "scopus"],
         doc_id: Optional[int] = None,
-    ) -> Iterator[dict[str, Any]]:
+    ) -> Optional[list[dict[str, Any]]]:
         """Parse a reference cell.
 
         Args:
@@ -418,15 +418,13 @@ class ParseReference:
             doc_id: doc_id to which the reference cell belongs. Default None.
 
         Returns:
-            Generator of parsed references.
+            List of parsed references.
         """
         sep = "; "
-        try:
-            ref_list = re.split(sep, ref_cell)
-        except Exception:
-            pass
-        else:
-            for ref in ref_list:
-                parsed_ref = self.parse_one_ref(ref, source, doc_id)
-                if parsed_ref is not None:
-                    yield parsed_ref
+        ref_list = re.split(sep, ref_cell)
+        parsed_refs: list[dict[str, Any]] = []
+        for ref in ref_list:
+            parsed_ref = self.parse_ref(ref, source, doc_id)
+            if parsed_ref is not None:
+                parsed_refs.append(parsed_ref)
+        return parsed_refs if parsed_refs else None
