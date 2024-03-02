@@ -92,14 +92,18 @@ $ histcite /Users/.../Downloads/dataset wos --top 100 --disable_timeline
 |`T*` |Total score, e.g. TLCS = Total Local Citation Scores.|
 |`Recs`|Count of Records|
 |`FAU`|First Author|
+|`CAU`|Corresponding Authors|
 |`AU`|Authors or Inventors|
+|`EM`|E-mail Address|
+|`CO`|Country of Authors|
+|`C3`|Author Affiliations|
+|`I2`|Institutions with Subdivision|
 |`TI`|Article Title|
 |`SO`|Source Title|
 |`DT`|Document Type|
 |`FU`|Funding Orgs|
 |`CR`|Cited References|
 |`DE`|Author Keywords|
-|`C3`|Author Affiliations|
 |`NR`|Cited Reference Count|
 |`TC`|Times Cited Count|
 |`J9`|Journal Abbreviation|

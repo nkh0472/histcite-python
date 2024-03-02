@@ -8,7 +8,7 @@ Supported file types:
 
 import re
 from pathlib import Path
-from typing import Callable, Literal
+from typing import Callable, Literal, Optional
 
 import pandas as pd
 
@@ -35,6 +35,37 @@ class ReadWosFile:
         return au_field.str.split(pat=";", n=1, expand=True)[0].str.replace(",", "")
 
     @staticmethod
+    def extract_corresponding_authors(entry: Optional[str]) -> Optional[str]:
+        """Extract corresponding authors from RP value."""
+        pattern = r"(?:^|\.; )(.+?)\s*\(corresponding author\)"
+        if entry is not None:
+            cau_list = []
+            for cau in re.findall(pattern, entry):
+                if "; " in cau:
+                    cau_list.extend(cau.split("; "))
+                else:
+                    cau_list.append(cau)
+        return "; ".join(set(cau_list))
+
+    @staticmethod
+    def extract_i2_co(entry: Optional[str]) -> Optional[tuple[str, str]]:
+        """Extract institution with subdivision and country from C1 and RP value"""
+        if entry is not None:
+            pattern = r"\(corresponding author\), (.*?)\.(?:;|$)" if "corresponding author" in entry else r"\] (.*?)\."
+            all_addr = re.findall(pattern, entry)
+            i2_set = set()
+            co_set = set()
+            for addr in all_addr:
+                fields = addr.split(", ")
+                i2 = ", ".join(fields[:2]) if len(fields) > 3 else fields[0]
+                co = fields[-1]
+                if co[-4:] == " USA":
+                    co = "USA"
+                i2_set.add(i2)
+                co_set.add(co)
+            return "; ".join(i2_set), "; ".join(co_set)
+
+    @staticmethod
     def read_wos_file(file_path: Path) -> pd.DataFrame:
         """Read Web of Science file and return dataframe.
 
@@ -57,9 +88,14 @@ class ReadWosFile:
             "BP",
             "DI",
             "UT",
+            "C1",
+            "RP",
         ]
         df = read_csv_file(file_path, use_cols, "\t")
         df.insert(1, "FAU", ReadWosFile.extract_first_author(df["AU"]))
+        df.insert(2, "CAU", df["RP"].apply(ReadWosFile.extract_corresponding_authors))
+        df[["I2 (RP)", "CO (RP)"]] = df["RP"].apply(ReadWosFile.extract_i2_co).apply(pd.Series)
+        df[["I2 (C1)", "CO (C1)"]] = df["C1"].apply(ReadWosFile.extract_i2_co).apply(pd.Series)
         df["source file"] = file_path.name
         return df
 
