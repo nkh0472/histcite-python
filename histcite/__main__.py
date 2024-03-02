@@ -70,4 +70,4 @@ def cli():
     graph_dot_path = output_path / "graph.dot"
     with open(graph_dot_path, "w") as f:
         f.write(graph_dot_file)
-    graph._export_graph_node_info(output_path / "graph_node_info.xlsx")
+    graph.export_graph_node_info(output_path / "graph_node_info.xlsx")

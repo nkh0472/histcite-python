@@ -66,7 +66,7 @@ class RecognizeReference:
             A Series of lists, each list contains the indexes of local references.
         """
 
-        def _merge_list(a: Optional[list[int]], b: Optional[list[int]]) -> Optional[list[int]]:
+        def merge_list(a: Optional[list[int]], b: Optional[list[int]]) -> Optional[list[int]]:
             c = set()
             if isinstance(a, list):
                 c.update(a)
@@ -84,7 +84,7 @@ class RecognizeReference:
         # DOI not exists
         compare_cols = ["FAU", "PY", "J9", "BP"]
         result_from_fields = RecognizeReference.recognize_refs_factory(docs_df, refs_df, compare_cols)
-        cited_refs_series = result_from_doi.combine(result_from_fields, _merge_list)
+        cited_refs_series = result_from_doi.combine(result_from_fields, merge_list)
         return cited_refs_series
 
     @staticmethod

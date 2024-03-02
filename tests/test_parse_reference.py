@@ -6,18 +6,18 @@ scopus_ref = "Negri E, Fumagalli L, Macchi M., A Review of the Roles of Digital 
 
 
 def test_parse_one_ref():
-    parsed_wos_ref = ParseReference().parse_one_ref(wos_ref_cell.split(";")[0], "wos")
+    parsed_wos_ref = ParseReference().parse_ref(wos_ref_cell.split(";")[0], "wos")
 
     assert isinstance(parsed_wos_ref, dict)
     assert parsed_wos_ref["PY"] == "2001"
     assert parsed_wos_ref["J9"] == "ADV NEUR IN"
 
-    parsed_cssci_ref = ParseReference().parse_one_ref(cssci_ref, "cssci")
+    parsed_cssci_ref = ParseReference().parse_ref(cssci_ref, "cssci")
     assert isinstance(parsed_cssci_ref, dict)
     assert parsed_cssci_ref["FAU"] == "严栋"
     assert parsed_cssci_ref["VL"] == "32(7)"
 
-    parsed_scopus_ref = ParseReference().parse_one_ref(scopus_ref, "scopus")
+    parsed_scopus_ref = ParseReference().parse_ref(scopus_ref, "scopus")
     assert isinstance(parsed_scopus_ref, dict)
     assert parsed_scopus_ref["FAU"] == "Negri E"
     assert parsed_scopus_ref["SO"] == "Procedia Manufacturing"
@@ -26,7 +26,7 @@ def test_parse_one_ref():
 
 
 def test_parse_ref_cell():
-    parsed_refs_list = list(ParseReference().parse_ref_cell(wos_ref_cell, "wos"))
+    parsed_refs_list = ParseReference().parse_ref_cell(wos_ref_cell, "wos")
     assert isinstance(parsed_refs_list, list)
     assert len(parsed_refs_list) == 4
     assert parsed_refs_list[0]["FAU"] == "Bengio Y"
