@@ -11,10 +11,39 @@ Supported statistic units:
 - Publication year
 - Document type
 """
+
 from pathlib import Path
 from typing import Literal, Optional
 
 import pandas as pd
+
+wos_analyses_index = [
+    "Records",
+    "Authors",
+    "Journals",
+    "Keywords",
+    "Institutions",
+    "Years",
+    "Document Type",
+]
+
+cssci_analyses_index = [
+    "Records",
+    "Authors",
+    "Journals",
+    "Keywords",
+    "Institutions",
+    "Years",
+]
+
+scopus_analyses_index = [
+    "Records",
+    "Authors",
+    "Journals",
+    "Keywords",
+    "Years",
+    "Document Type",
+]
 
 
 class ComputeMetrics:
@@ -32,17 +61,26 @@ class ComputeMetrics:
             citation_relation: DataFrame of citation relationship.
             source: Data source. `wos`, `cssci` or `scopus`.
         """
-        self._merged_docs_df: pd.DataFrame = docs_df.merge(
-            citation_relation[["doc_id", "LCR", "LCS"]], on="doc_id"
-        )
-        self._source: Literal["wos", "cssci", "scopus"] = source
+        self.merged_docs_df: pd.DataFrame = docs_df.merge(citation_relation[["doc_id", "LCR", "LCS"]], on="doc_id")
+        self.source: Literal["wos", "cssci", "scopus"] = source
+
+    def check_analyses_index(self) -> list[str]:
+        """Return the index of analyses."""
+        if self.source == "wos":
+            return wos_analyses_index
+        elif self.source == "cssci":
+            return cssci_analyses_index
+        elif self.source == "scopus":
+            return scopus_analyses_index
+        else:
+            raise ValueError("Invalid source type")
 
     def generate_df_factory(
         self,
         use_cols: list[str],
         col: str,
         split_char: Optional[str] = None,
-        str_lower: bool = False,
+        lower_case: bool = False,
         sort_by_col: Literal["Recs", "TLCS", "TGCS"] = "Recs",
     ) -> pd.DataFrame:
         """A factory method to generate DataFrame of specific field.
@@ -51,7 +89,7 @@ class ComputeMetrics:
             use_cols: Columns to use. e.g. `["AU", "LCS", "TC"]`.
             col: Column to analyze. e.g. `AU`.
             split_char: Whether to split string. e.g. `; `. Default None.
-            str_lower: Whether to convert string to lowercase. Default False.
+            lower_case: Whether to convert string to lowercase. Default False.
             sort_by_col: Sort DataFrame by column. `Recs`, `TLCS` or `TGCS`. Default `Recs`.
 
         Returns:
@@ -63,29 +101,23 @@ class ComputeMetrics:
         elif sort_by_col == "TGCS":
             assert "TC" in use_cols, "TC must be in <use_cols> when sorting by TGCS"
 
-        df = self._merged_docs_df[use_cols]
+        df = self.merged_docs_df[use_cols].dropna(subset=[col])
+        if lower_case:
+            df[col] = df[col].str.lower()
         if split_char:
-            df = df.dropna(subset=[col])
-            df = df.astype({col: "str"})
-            if str_lower:
-                df[col] = df[col].str.lower()
             df[col] = df[col].str.split(split_char)
             df = df.explode(col)
             df = df.reset_index(drop=True)
 
         if "LCS" in use_cols:
             if "TC" in use_cols:
-                grouped_df = df.groupby(col).agg(
-                    {col: "count", "LCS": "sum", "TC": "sum"}
-                )
+                grouped_df = df.groupby(col).agg({col: "count", "LCS": "sum", "TC": "sum"})
             else:
                 grouped_df = df.groupby(col).agg({col: "count", "LCS": "sum"})
         else:
             grouped_df = df.groupby(col).agg({col: "count"})
 
-        grouped_df.rename(
-            columns={col: "Recs", "LCS": "TLCS", "TC": "TGCS"}, inplace=True
-        )
+        grouped_df.rename(columns={col: "Recs", "LCS": "TLCS", "TC": "TGCS"}, inplace=True)
         # e.g. Andersson, Gerhard (7202645907)
         if col == "Author full names":
             grouped_df.index = grouped_df.index.str.replace(r" \(\d+\)", "", regex=True)
@@ -96,7 +128,7 @@ class ComputeMetrics:
 
     def generate_record_df(self) -> pd.DataFrame:
         """Return record DataFrame."""
-        if self._source in ["wos", "scopus"]:
+        if self.source in ["wos", "scopus"]:
             use_cols = [
                 "AU",
                 "TI",
@@ -109,11 +141,11 @@ class ComputeMetrics:
                 "NR",
                 "source file",
             ]
-        elif self._source == "cssci":
+        elif self.source == "cssci":
             use_cols = ["AU", "TI", "SO", "PY", "LCS", "LCR", "NR", "source file"]
         else:
             raise ValueError("Invalid source type")
-        records_df = self._merged_docs_df[use_cols]
+        records_df = self.merged_docs_df[use_cols]
         if "TC" in use_cols:
             records_df = records_df.rename(columns={"TC": "GCS"})
         if "NR" in use_cols:
@@ -122,11 +154,11 @@ class ComputeMetrics:
 
     def generate_author_df(self) -> pd.DataFrame:
         """Return author DataFrame."""
-        if self._source == "wos":
+        if self.source == "wos":
             use_cols = ["AU", "LCS", "TC"]
-        elif self._source == "cssci":
+        elif self.source == "cssci":
             use_cols = ["AU", "LCS"]
-        elif self._source == "scopus":
+        elif self.source == "scopus":
             use_cols = ["Author full names", "LCS", "TC"]
         else:
             raise ValueError("Invalid source type")
@@ -134,7 +166,7 @@ class ComputeMetrics:
 
     def generate_corresponding_author_df(self) -> pd.DataFrame:
         """Return corresponding author DataFrame. Only support WOS."""
-        if self._source == "wos":        
+        if self.source == "wos":
             use_cols = ["CAU", "LCS", "TC"]
         else:
             raise ValueError("Invalid source type")
@@ -142,9 +174,9 @@ class ComputeMetrics:
 
     def generate_keyword_df(self) -> pd.DataFrame:
         """Return keyword DataFrame."""
-        if self._source in ["wos", "scopus"]:
+        if self.source in ["wos", "scopus"]:
             use_cols = ["DE", "LCS", "TC"]
-        elif self._source == "cssci":
+        elif self.source == "cssci":
             use_cols = ["DE", "LCS"]
         else:
             raise ValueError("Invalid source type")
@@ -152,12 +184,10 @@ class ComputeMetrics:
 
     def generate_institution_df(self) -> pd.DataFrame:
         """Return institution DataFrame. Not support Scopus."""
-        assert (
-            self._source != "scopus"
-        ), "Scopus is not supported to analyze <institution> field yet."
-        if self._source == "wos":
+        assert self.source != "scopus", "Scopus is not supported to analyze <institution> field yet."
+        if self.source == "wos":
             use_cols = ["C3", "LCS", "TC"]
-        elif self._source == "cssci":
+        elif self.source == "cssci":
             use_cols = ["C3", "LCS"]
         else:
             raise ValueError("Invalid source type")
@@ -165,7 +195,7 @@ class ComputeMetrics:
 
     def generate_i2_c1_df(self) -> pd.DataFrame:
         """Return institution with subdivision DataFrame. Data from C1 field. Only support WoS."""
-        if self._source == "wos":        
+        if self.source == "wos":
             use_cols = ["I2 (C1)", "LCS", "TC"]
         else:
             raise ValueError("Invalid source type")
@@ -173,7 +203,7 @@ class ComputeMetrics:
 
     def generate_i2_rp_df(self) -> pd.DataFrame:
         """Return institution with subdivision DataFrame. Data from RP field. Only support WoS. """
-        if self._source == "wos":        
+        if self.source == "wos":
             use_cols = ["I2 (RP)", "LCS", "TC"]
         else:
             raise ValueError("Invalid source type")
@@ -181,7 +211,7 @@ class ComputeMetrics:
 
     def generate_co_c1_df(self) -> pd.DataFrame:
         """Return country DataFrame. Data from C1 field. Only support WoS."""
-        if self._source == "wos":        
+        if self.source == "wos":
             use_cols = ["CO (C1)", "LCS", "TC"]
         else:
             raise ValueError("Invalid source type")
@@ -189,7 +219,7 @@ class ComputeMetrics:
     
     def generate_co_rp_df(self) -> pd.DataFrame:
         """Return country DataFrame. Data from RP field. Only support WoS."""
-        if self._source == "wos":        
+        if self.source == "wos":
             use_cols = ["CO (RP)", "LCS", "TC"]
         else:
             raise ValueError("Invalid source type")
@@ -197,9 +227,9 @@ class ComputeMetrics:
 
     def generate_journal_df(self) -> pd.DataFrame:
         """Return journal DataFrame."""
-        if self._source in ["wos", "scopus"]:
+        if self.source in ["wos", "scopus"]:
             use_cols = ["SO", "LCS", "TC"]
-        elif self._source == "cssci":
+        elif self.source == "cssci":
             use_cols = ["SO", "LCS"]
         else:
             raise ValueError("Invalid source type")
@@ -212,26 +242,9 @@ class ComputeMetrics:
 
     def generate_document_type_df(self) -> pd.DataFrame:
         """Return document type DataFrame. Not support CSSCI."""
-        assert self._source != "cssci", "CSSCI doesn't have <document type> info"
+        assert self.source != "cssci", "CSSCI doesn't have <document type> info"
         use_cols = ["DT"]
         return self.generate_df_factory(use_cols, "DT")
-
-    # def generate_reference_df(self):
-    #     """Generate reference DataFrame. The `local` field means whether the reference is in the downloaded records."""
-    #     assert self.refs_df is not None, "Argument <refs_df> can't be None"
-    #     if self.source == "wos":
-    #         keys = ["FAU", "PY", "J9", "VL", "BP", "DI", "local"]
-    #     elif self.source == "cssci":
-    #         keys = ["FAU", "TI", "SO", "PY", "VL", "local"]
-    #     elif self.source == "scopus":
-    #         keys = ["FAU", "TI", "SO", "VL", "BP", "EP", "PY", "local"]
-    #     else:
-    #         raise ValueError("Invalid source type")
-    #     refs_df = (
-    #         self.refs_df.groupby(by=keys, dropna=False).size().reset_index(name="Recs")
-    #     )
-    #     refs_df.insert(len(refs_df.columns) - 1, "local", refs_df.pop("local"))
-    #     return refs_df.sort_values(by="Recs", ascending=False)
 
     def write2excel(self, save_path: Path):
         """Write all dataframes to an excel file. Each dataframe is a sheet.
@@ -244,35 +257,34 @@ class ComputeMetrics:
         """
         Path.mkdir(save_path.parent, exist_ok=True)
         with pd.ExcelWriter(save_path) as writer:
-            self.generate_record_df().to_excel(
-                writer, sheet_name="Records", index=False
-            )
+            self.generate_record_df().to_excel(writer, sheet_name="Records", index=False)
             self.generate_author_df().to_excel(writer, sheet_name="Authors")
             self.generate_journal_df().to_excel(writer, sheet_name="Journals")
             self.generate_keyword_df().to_excel(writer, sheet_name="Keywords")
             self.generate_year_df().to_excel(writer, sheet_name="Years")
 
-            if self._source in ["wos", "scopus"]:
+            if self.source in ["wos", "scopus"]:
                 self.generate_document_type_df().to_excel(
                     writer, sheet_name="Document Type"
                 )
-            if self._source in ["wos", "cssci"]:
+            if self.source in ["wos", "cssci"]:
                 self.generate_institution_df().to_excel(
                     writer, sheet_name="Institutions"
                 )
-            if self._source in ["wos"]:
+            if self.source in ["wos"]:
                 self.generate_i2_c1_df().to_excel(
-                    writer, sheet_name="I2 (C1)"
+                    writer, sheet_name="I2 from C1"
                 )
                 self.generate_i2_rp_df().to_excel(
-                    writer, sheet_name="I2 (RP)"
+                    writer, sheet_name="I2 from RP"
                 )
                 self.generate_co_c1_df().to_excel(
-                    writer, sheet_name="Country (C1)"
+                    writer, sheet_name="Country from C1"
                 )
                 self.generate_co_rp_df().to_excel(
-                    writer, sheet_name="Country (RP)"
+                    writer, sheet_name="Country from RP"
                 )
                 self.generate_corresponding_author_df().to_excel(
                     writer, sheet_name="Corresponding Authors"
                 )
+

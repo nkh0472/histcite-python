@@ -1,4 +1,4 @@
-exclude: 'examples/|tests/data/'
+exclude: 'examples/|tests/testdata/'
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -8,9 +8,13 @@ repos:
      - id: check-yaml
      - id: end-of-file-fixer
      - id: trailing-whitespace
-       args: [--markdown-linebreak-ext=md]
 
   - repo: https://github.com/psf/black
     rev: 23.9.1
     hooks:
      - id: black
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
