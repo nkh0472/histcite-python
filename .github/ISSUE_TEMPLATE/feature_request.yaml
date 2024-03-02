@@ -7,11 +7,11 @@ body:
   - type: checkboxes
     id: feature
     attributes:
-      label: Feature类型
+      label: Feature 类型
       options:
         - label: 参考文献解析
         - label: 支持其他数据源
-        - label: 增加其他功能
+        - label: 增加功能
     validations:
       required: true
 
@@ -31,7 +31,7 @@ body:
   - type: textarea
     id: description
     attributes:
-      label: Feature描述
-      placeholder: 请提供一份包含500-1000条数据的原始数据集[非必要]。
+      label: Feature 描述
+      placeholder: 请提供一份包含至少500条数据的数据集[非必要]。
     validations:
       required: true
