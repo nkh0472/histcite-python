@@ -27,7 +27,7 @@ pip install histcite-python
 ```
 
 ## 数据准备
-|数据来源|下载说明|默认文件名|
+|数据来源|下载说明|原始文件名|
 |:----|:----|:----|
 |Web of Science|`核心合集`，格式选择 `Tab delimited file/制表符分隔文件`，导出内容选择 `Full Record and Cited References/全记录与引用的参考文献` 或者是 `Custom selection/自定义选择项`，全选字段。|`savedrecs*.txt`|
 |CSSCI|从 `CSSCI数据库` 正常导出即可。|`LY_*.txt`|
@@ -94,7 +94,7 @@ $ histcite /Users/.../Downloads/dataset wos --top 100 --disable_timeline
 |`FAU`|First Author|
 |`CAU`|Corresponding Authors|
 |`AU`|Authors or Inventors|
-|`EM`|E-mail Address|
+|`EM`|Email Address|
 |`CO`|Country of Authors|
 |`C3`|Author Affiliations|
 |`I2`|Institutions with Subdivision|
@@ -117,15 +117,12 @@ $ histcite /Users/.../Downloads/dataset wos --top 100 --disable_timeline
 
 ## FAQ
 1. 为什么生成的引文网络图时间线会错乱？
-- Graphviz 会自动调整节点位置，节点数量过少时容易出现这一问题。可以通过设置参数来关闭时间线。
+- Graphviz 会自动调整节点位置，节点数量较少时容易出现这一问题。可以通过设置参数来关闭时间线。
 
-2. 为什么有些学科领域的参考文献解析的错误率较高？
-- 不同学科领域的主要引用来源不同，期刊引用格式要求不同，导致不同数据库、不同学科领域的引文格式与解析方式差异较大。您可以查看解析后的参考文献表 (refs_df)，如果错误率较高，或者发现具有某种特征的参考文献均出现了解析错误，欢迎提交 [Feature Request](https://github.com/doublessay/histcite-python/issues)，我们会尽快修复。
-
-3. 想要分析其他数据源的文献元数据？
+2. 想要分析其他来源的文献元数据？
 - 该数据源能够导出文献的参考文献或引文数据。如果满足这一条件的话，欢迎提交 [Feature Request](https://github.com/doublessay/histcite-python/issues)，我们会尽快支持。
 
-4. 是否存在其他类似的工具？
+3. 是否存在其他类似的工具？
 - [CiteSpace](https://citespace.podia.com/)
 - [CitNetExplorer](https://www.citnetexplorer.nl/)
 - [Connected Papers](https://www.connectedpapers.com/)
