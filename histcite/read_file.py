@@ -48,29 +48,38 @@ class ReadWosFile:
         return "; ".join(set(cau_list))
 
     @staticmethod
-    def extract_i2_co(entry: Optional[str]) -> Optional[tuple[str, str]]:
-        """Extract institution with subdivision and country from C1 and RP value"""
+    def extract_co_i2(entry: Optional[str]) -> tuple[Optional[str], Optional[str]]:
+        """Extract country and institution with subdivision from C1 or RP value"""
+        co_value = None
+        i2_value = None
         if entry is not None:
-            pattern = r"\(corresponding author\), (.*?)\.(?:;|$)" if "corresponding author" in entry else r"\] (.*?)\."
-            all_addr = re.findall(pattern, entry)
-            i2_set = set()
-            co_set = set()
-            for addr in all_addr:
-                fields = addr.split(", ")
-                i2 = ", ".join(fields[:2]) if len(fields) > 3 else fields[0]
-                co = fields[-1]
-                if co[-4:] == " USA":
-                    co = "USA"
-                i2_set.add(i2)
-                co_set.add(co)
-            return "; ".join(i2_set), "; ".join(co_set)
+            if "corresponding author" in entry:
+                pattern = r"\(corresponding author\), (.*?)\.(?=;|$)"
+            else:
+                pattern = r"\] (.*?)(?=; \[|$)"
+            addr_list = re.findall(pattern, entry)
+            if len(addr_list) > 0:
+                co_set = set()
+                i2_set = set()
+                for addr in addr_list:
+                    parts = addr.split(", ")
+                    i2 = ", ".join(parts[:2]) if len(parts) > 3 else parts[0]
+                    co = parts[-1]
+                    if co[-4:] == " USA":
+                        co = "USA"
+                    co_set.add(co)
+                    i2_set.add(i2)
+                co_value = "; ".join(co_set)
+                i2_value = "; ".join(i2_set)
+        return co_value, i2_value
 
     @staticmethod
-    def read_wos_file(file_path: Path) -> pd.DataFrame:
+    def read_wos_file(file_path: Path, addr_field: Literal["C1", "RP"]) -> pd.DataFrame:
         """Read Web of Science file and return dataframe.
 
         Args:
             file_path: Path of a Web of Science file. File name is similar to `savedrecs.txt`.
+            addr_field: Which address field to use to extract institution with subdivision and country info.
         """
         use_cols = [
             "AU",
@@ -94,8 +103,7 @@ class ReadWosFile:
         df = read_csv_file(file_path, use_cols, "\t")
         df.insert(1, "FAU", ReadWosFile.extract_first_author(df["AU"]))
         df.insert(2, "CAU", df["RP"].apply(ReadWosFile.extract_corresponding_authors))
-        df[["I2 (RP)", "CO (RP)"]] = df["RP"].apply(ReadWosFile.extract_i2_co).apply(pd.Series)
-        df[["I2 (C1)", "CO (C1)"]] = df["C1"].apply(ReadWosFile.extract_i2_co).apply(pd.Series)
+        df[["CO", "I2"]] = df[addr_field].apply(ReadWosFile.extract_co_i2).apply(pd.Series)
         df["source file"] = file_path.name
         return df
 
@@ -217,14 +225,18 @@ class ReadScopusFile:
 class ReadFile:
     """Read files in the folder path and return a concated dataframe."""
 
-    def __init__(self, folder_path: Path, source: Literal["wos", "cssci", "scopus"]):
+    def __init__(
+        self, folder_path: Path, source: Literal["wos", "cssci", "scopus"], addr_field: Literal["C1", "RP"] = "C1"
+    ):
         """
         Args:
             folder_path: The folder path of raw files.
             source: Data source. `wos`, `cssci` or `scopus`.
+            addr_field: Address field, only for wos source. `C1` or `RP`.
         """
         self.folder_path: Path = folder_path
         self.source: Literal["wos", "cssci", "scopus"] = source
+        self.addr_field = addr_field
         try:
             self.file_path_list: list[Path] = self.obtain_file_path_list()
         except FileNotFoundError:
@@ -242,55 +254,58 @@ class ReadFile:
         file_name_list.sort()
         return file_name_list
 
-    def concat_df(self, read_file_func: Callable[[Path], pd.DataFrame]) -> pd.DataFrame:
+    def concat_df(self) -> pd.DataFrame:
         file_count = len(self.file_path_list)
         if file_count > 1:
-            return pd.concat(
-                [read_file_func(file_path) for file_path in self.file_path_list],
-                ignore_index=True,
-            )
+            if self.source == "wos":
+                return pd.concat(
+                    [ReadWosFile.read_wos_file(file_path, self.addr_field) for file_path in self.file_path_list],
+                    ignore_index=True,
+                )
+            elif self.source == "cssci":
+                return pd.concat(
+                    [ReadCssciFile.read_cssci_file(file_path) for file_path in self.file_path_list],
+                    ignore_index=True,
+                )
+            elif self.source == "scopus":
+                return pd.concat(
+                    [ReadScopusFile.read_scopus_file(file_path) for file_path in self.file_path_list],
+                    ignore_index=True,
+                )
         elif file_count == 1:
-            return read_file_func(self.file_path_list[0])
+            if self.source == "wos":
+                return ReadWosFile.read_wos_file(self.file_path_list[0], self.addr_field)
+            elif self.source == "cssci":
+                return ReadCssciFile.read_cssci_file(self.file_path_list[0])
+            elif self.source == "scopus":
+                return ReadScopusFile.read_scopus_file(self.file_path_list[0])
         else:
             raise FileNotFoundError("No valid file in the folder")
 
+    @staticmethod
+    def drop_duplicate_rows(docs_df: pd.DataFrame, check_cols: list[str]) -> pd.DataFrame:
+        original_num = docs_df.shape[0]
+        try:
+            docs_df = docs_df.drop_duplicates(subset=check_cols, ignore_index=True)
+        except Exception:
+            print(f"共读取 {original_num} 条数据")
+        else:
+            current_num = docs_df.shape[0]
+            print(f"共读取 {original_num} 条数据，去重后剩余 {current_num} 条")
+        finally:
+            return docs_df
+
     def read_all(self) -> pd.DataFrame:
         """Concat multi dataframe and drop duplicate rows."""
-
-        def drop_duplicate_rows():
-            """
-            if wos, drop duplicate rows by `UT`.
-
-            if cssci, drop duplicate rows by `TI` and `FAU`.
-
-            if scopus, drop duplicate rows by `EID`.
-            """
-            if self.source == "wos":
-                check_cols = ["UT"]
-            elif self.source == "cssci":
-                check_cols = ["TI", "FAU"]
-            elif self.source == "scopus":
-                check_cols = ["EID"]
-            else:
-                raise ValueError("Invalid data source")
-            original_num = docs_df.shape[0]
-            try:
-                docs_df.drop_duplicates(subset=check_cols, ignore_index=True, inplace=True)
-            except Exception:
-                print(f"共读取 {original_num} 条数据")
-            else:
-                current_num = docs_df.shape[0]
-                print(f"共读取 {original_num} 条数据，去重后剩余 {current_num} 条")
-
         if self.source == "wos":
-            docs_df = self.concat_df(ReadWosFile.read_wos_file)
+            check_cols = ["UT"]
         elif self.source == "cssci":
-            docs_df = self.concat_df(ReadCssciFile.read_cssci_file)
+            check_cols = ["TI", "FAU"]
         elif self.source == "scopus":
-            docs_df = self.concat_df(ReadScopusFile.read_scopus_file)
-        else:
-            raise ValueError("Invalid data source")
-        drop_duplicate_rows()
+            check_cols = ["EID"]
+
+        docs_df = self.concat_df()
+        docs_df = self.drop_duplicate_rows(docs_df, check_cols)
         docs_df.insert(0, "doc_id", docs_df.index)
         docs_df = docs_df.convert_dtypes(dtype_backend="pyarrow")
         return docs_df

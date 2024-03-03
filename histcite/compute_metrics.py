@@ -1,16 +1,4 @@
-"""This module is used to generate and export descriptive statistics.
-
-Supported statistic units:
-- Author
-- Corresponding Author
-- Journal
-- Keyword
-- Institution
-- Instituion with subdivision
-- Country
-- Publication year
-- Document type
-"""
+"""This module is used to generate and export descriptive statistics."""
 
 from pathlib import Path
 from typing import Literal, Optional
@@ -22,9 +10,11 @@ wos_analyses_index = [
     "Authors",
     "Journals",
     "Keywords",
-    "Institutions",
-    "Years",
+    "Yearly output",
     "Document Type",
+    "Institution",
+    "Institution with Subdivision",
+    "Country",
 ]
 
 cssci_analyses_index = [
@@ -32,8 +22,8 @@ cssci_analyses_index = [
     "Authors",
     "Journals",
     "Keywords",
-    "Institutions",
-    "Years",
+    "Yearly output",
+    "Institution",
 ]
 
 scopus_analyses_index = [
@@ -41,7 +31,7 @@ scopus_analyses_index = [
     "Authors",
     "Journals",
     "Keywords",
-    "Years",
+    "Yearly output",
     "Document Type",
 ]
 
@@ -193,37 +183,21 @@ class ComputeMetrics:
             raise ValueError("Invalid source type")
         return self.generate_df_factory(use_cols, "C3", "; ")
 
-    def generate_i2_c1_df(self) -> pd.DataFrame:
-        """Return institution with subdivision DataFrame. Data from C1 field. Only support WoS."""
+    def generate_i2_df(self) -> pd.DataFrame:
+        """Return institution with subdivision DataFrame. Only support WoS."""
         if self.source == "wos":
-            use_cols = ["I2 (C1)", "LCS", "TC"]
+            use_cols = ["I2", "LCS", "TC"]
         else:
             raise ValueError("Invalid source type")
-        return self.generate_df_factory(use_cols, "I2 (C1)", "; ")
+        return self.generate_df_factory(use_cols, "I2", "; ")
 
-    def generate_i2_rp_df(self) -> pd.DataFrame:
-        """Return institution with subdivision DataFrame. Data from RP field. Only support WoS. """
+    def generate_co_df(self) -> pd.DataFrame:
+        """Return country DataFrame. Only support WoS."""
         if self.source == "wos":
-            use_cols = ["I2 (RP)", "LCS", "TC"]
+            use_cols = ["CO", "LCS", "TC"]
         else:
             raise ValueError("Invalid source type")
-        return self.generate_df_factory(use_cols, "I2 (RP)", "; ")
-
-    def generate_co_c1_df(self) -> pd.DataFrame:
-        """Return country DataFrame. Data from C1 field. Only support WoS."""
-        if self.source == "wos":
-            use_cols = ["CO (C1)", "LCS", "TC"]
-        else:
-            raise ValueError("Invalid source type")
-        return self.generate_df_factory(use_cols, "CO (C1)", "; ")
-    
-    def generate_co_rp_df(self) -> pd.DataFrame:
-        """Return country DataFrame. Data from RP field. Only support WoS."""
-        if self.source == "wos":
-            use_cols = ["CO (RP)", "LCS", "TC"]
-        else:
-            raise ValueError("Invalid source type")
-        return self.generate_df_factory(use_cols, "CO (RP)", "; ")
+        return self.generate_df_factory(use_cols, "CO", "; ")
 
     def generate_journal_df(self) -> pd.DataFrame:
         """Return journal DataFrame."""
@@ -261,30 +235,13 @@ class ComputeMetrics:
             self.generate_author_df().to_excel(writer, sheet_name="Authors")
             self.generate_journal_df().to_excel(writer, sheet_name="Journals")
             self.generate_keyword_df().to_excel(writer, sheet_name="Keywords")
-            self.generate_year_df().to_excel(writer, sheet_name="Years")
+            self.generate_year_df().to_excel(writer, sheet_name="Yearly output")
 
             if self.source in ["wos", "scopus"]:
-                self.generate_document_type_df().to_excel(
-                    writer, sheet_name="Document Type"
-                )
+                self.generate_document_type_df().to_excel(writer, sheet_name="Document Type")
             if self.source in ["wos", "cssci"]:
-                self.generate_institution_df().to_excel(
-                    writer, sheet_name="Institutions"
-                )
+                self.generate_institution_df().to_excel(writer, sheet_name="Institution")
             if self.source in ["wos"]:
-                self.generate_i2_c1_df().to_excel(
-                    writer, sheet_name="I2 from C1"
-                )
-                self.generate_i2_rp_df().to_excel(
-                    writer, sheet_name="I2 from RP"
-                )
-                self.generate_co_c1_df().to_excel(
-                    writer, sheet_name="Country from C1"
-                )
-                self.generate_co_rp_df().to_excel(
-                    writer, sheet_name="Country from RP"
-                )
-                self.generate_corresponding_author_df().to_excel(
-                    writer, sheet_name="Corresponding Authors"
-                )
-
+                self.generate_i2_df().to_excel(writer, sheet_name="Institution with Subdivision")
+                self.generate_co_df().to_excel(writer, sheet_name="Country")
+                self.generate_corresponding_author_df().to_excel(writer, sheet_name="Corresponding Authors")

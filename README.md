@@ -93,17 +93,19 @@ $ histcite /Users/.../Downloads/dataset wos --top 100 --disable_timeline
 |`Recs`|Count of Records|
 |`FAU`|First Author|
 |`CAU`|Corresponding Authors|
-|`AU`|Authors or Inventors|
+|`AU`|Authors|
 |`EM`|Email Address|
 |`CO`|Country of Authors|
+|`C1`|Addresses|
 |`C3`|Author Affiliations|
-|`I2`|Institutions with Subdivision|
+|`RP`|Reprint Address|
+|`I2`|Institution with Subdivision|
 |`TI`|Article Title|
 |`SO`|Source Title|
 |`DT`|Document Type|
 |`FU`|Funding Orgs|
-|`CR`|Cited References|
 |`DE`|Author Keywords|
+|`CR`|Cited References|
 |`NR`|Cited Reference Count|
 |`TC`|Times Cited Count|
 |`J9`|Journal Abbreviation|
