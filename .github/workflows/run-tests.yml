@@ -26,7 +26,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install pytest coverage
-        pip install pandas>=2.0 pyarrow openpyxl
+        pip install pandas>=2.0 pyarrow openpyxl refparse
     - name: Run tests
       if: matrix.python-version != '3.9'
       run: pytest
