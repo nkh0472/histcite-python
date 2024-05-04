@@ -14,6 +14,7 @@ wos_analyses_index = [
     "Document Type",
     "Institution",
     "Institution with Subdivision",
+    "Corresponding Authors",
     "Country",
 ]
 
@@ -42,20 +43,13 @@ class ComputeMetrics:
     def __init__(
         self,
         docs_df: pd.DataFrame,
-        citation_relation: pd.DataFrame,
+        citation_matrix: pd.DataFrame,
         source: Literal["wos", "cssci", "scopus"],
     ):
-        """
-        Args:
-            docs_df: DataFrame of docs.
-            citation_relation: DataFrame of citation relationship.
-            source: Data source. `wos`, `cssci` or `scopus`.
-        """
-        self.merged_docs_df: pd.DataFrame = docs_df.merge(citation_relation[["doc_id", "LCR", "LCS"]], on="doc_id")
-        self.source: Literal["wos", "cssci", "scopus"] = source
+        self.merged_docs_df = docs_df.merge(citation_matrix[["node", "LCR", "LCS"]], on="node")
+        self.source = source
 
-    def check_analyses_index(self) -> list[str]:
-        """Return the index of analyses."""
+    def check_sheets(self) -> list[str]:
         if self.source == "wos":
             return wos_analyses_index
         elif self.source == "cssci":
@@ -85,56 +79,43 @@ class ComputeMetrics:
         Returns:
             A DataFrame with some statitical metrics.
         """
-        assert col in use_cols, "Argument <col> must be in use_cols"
+        assert col in use_cols, "Argument <col> must be in <use_cols>"
         if sort_by_col == "TLCS":
-            assert "LCS" in use_cols, "LCS must be in <use_cols> when sorting by TLCS"
+            assert "LCS" in use_cols
         elif sort_by_col == "TGCS":
-            assert "TC" in use_cols, "TC must be in <use_cols> when sorting by TGCS"
+            assert "TC" in use_cols
 
         df = self.merged_docs_df[use_cols].dropna(subset=[col])
         if lower_case:
             df[col] = df[col].str.lower()
         if split_char:
             df[col] = df[col].str.split(split_char)
-            df = df.explode(col)
-            df = df.reset_index(drop=True)
+            df = df.explode(col, ignore_index=True)
 
+        agg_dict = {col: "count"}
         if "LCS" in use_cols:
-            if "TC" in use_cols:
-                grouped_df = df.groupby(col).agg({col: "count", "LCS": "sum", "TC": "sum"})
-            else:
-                grouped_df = df.groupby(col).agg({col: "count", "LCS": "sum"})
-        else:
-            grouped_df = df.groupby(col).agg({col: "count"})
-
+            agg_dict.update({"LCS": "sum"})
+        if "TC" in use_cols:
+            agg_dict.update({"TC": "sum"})
+        grouped_df = df.groupby(col).agg(agg_dict)
         grouped_df.rename(columns={col: "Recs", "LCS": "TLCS", "TC": "TGCS"}, inplace=True)
-        # e.g. Andersson, Gerhard (7202645907)
-        if col == "Author full names":
-            grouped_df.index = grouped_df.index.str.replace(r" \(\d+\)", "", regex=True)
-
-        if not sort_by_col:
-            sort_by_col = "Recs"
         return grouped_df.sort_values(sort_by_col, ascending=False)
 
     def generate_record_df(self) -> pd.DataFrame:
         """Return record DataFrame."""
-        if self.source in ["wos", "scopus"]:
-            use_cols = [
-                "AU",
-                "TI",
-                "SO",
-                "PY",
-                "TI",
-                "LCS",
-                "TC",
-                "LCR",
-                "NR",
-                "source file",
-            ]
-        elif self.source == "cssci":
-            use_cols = ["AU", "TI", "SO", "PY", "LCS", "LCR", "NR", "source file"]
-        else:
-            raise ValueError("Invalid source type")
+        use_cols = [
+            "AU",
+            "TI",
+            "SO",
+            "PY",
+            "LCS",
+            "TC",
+            "LCR",
+            "NR",
+            "source file",
+        ]
+        if self.source == "cssci":
+            use_cols.remove("TC")
         records_df = self.merged_docs_df[use_cols]
         if "TC" in use_cols:
             records_df = records_df.rename(columns={"TC": "GCS"})
@@ -144,79 +125,58 @@ class ComputeMetrics:
 
     def generate_author_df(self) -> pd.DataFrame:
         """Return author DataFrame."""
-        if self.source == "wos":
-            use_cols = ["AU", "LCS", "TC"]
-        elif self.source == "cssci":
-            use_cols = ["AU", "LCS"]
-        elif self.source == "scopus":
-            use_cols = ["Author full names", "LCS", "TC"]
-        else:
-            raise ValueError("Invalid source type")
-        return self.generate_df_factory(use_cols, use_cols[0], "; ")
+        use_cols = ["AU", "LCS", "TC"]
+        if self.source == "cssci":
+            use_cols.remove("TC")
+        return self.generate_df_factory(use_cols, "AU", "; ")
 
     def generate_corresponding_author_df(self) -> pd.DataFrame:
-        """Return corresponding author DataFrame. Only support WOS."""
+        """Return corresponding author DataFrame. Only support WoS."""
         if self.source == "wos":
             use_cols = ["CAU", "LCS", "TC"]
-        else:
-            raise ValueError("Invalid source type")
         return self.generate_df_factory(use_cols, "CAU", "; ")
 
     def generate_keyword_df(self) -> pd.DataFrame:
         """Return keyword DataFrame."""
-        if self.source in ["wos", "scopus"]:
-            use_cols = ["DE", "LCS", "TC"]
-        elif self.source == "cssci":
-            use_cols = ["DE", "LCS"]
-        else:
-            raise ValueError("Invalid source type")
+        use_cols = ["DE", "LCS", "TC"]
+        if self.source == "cssci":
+            use_cols.remove("TC")
         return self.generate_df_factory(use_cols, "DE", "; ", True)
 
     def generate_institution_df(self) -> pd.DataFrame:
         """Return institution DataFrame. Not support Scopus."""
-        assert self.source != "scopus", "Scopus is not supported to analyze <institution> field yet."
         if self.source == "wos":
             use_cols = ["C3", "LCS", "TC"]
         elif self.source == "cssci":
             use_cols = ["C3", "LCS"]
-        else:
-            raise ValueError("Invalid source type")
         return self.generate_df_factory(use_cols, "C3", "; ")
 
-    def generate_i2_df(self) -> pd.DataFrame:
+    def generate_sub_institution_df(self) -> pd.DataFrame:
         """Return institution with subdivision DataFrame. Only support WoS."""
         if self.source == "wos":
             use_cols = ["I2", "LCS", "TC"]
-        else:
-            raise ValueError("Invalid source type")
         return self.generate_df_factory(use_cols, "I2", "; ")
 
-    def generate_co_df(self) -> pd.DataFrame:
+    def generate_country_df(self) -> pd.DataFrame:
         """Return country DataFrame. Only support WoS."""
         if self.source == "wos":
             use_cols = ["CO", "LCS", "TC"]
-        else:
-            raise ValueError("Invalid source type")
         return self.generate_df_factory(use_cols, "CO", "; ")
 
     def generate_journal_df(self) -> pd.DataFrame:
         """Return journal DataFrame."""
-        if self.source in ["wos", "scopus"]:
-            use_cols = ["SO", "LCS", "TC"]
-        elif self.source == "cssci":
-            use_cols = ["SO", "LCS"]
-        else:
-            raise ValueError("Invalid source type")
+        use_cols = ["SO", "LCS", "TC"]
+        if self.source == "cssci":
+            use_cols.remove("TC")
         return self.generate_df_factory(use_cols, "SO")
 
     def generate_year_df(self) -> pd.DataFrame:
-        """Return publication year DataFrame. Sort by `PY` ascending."""
+        """Return publication year DataFrame."""
         use_cols = ["PY"]
         return self.generate_df_factory(use_cols, "PY").sort_values(by="PY")
 
     def generate_document_type_df(self) -> pd.DataFrame:
         """Return document type DataFrame. Not support CSSCI."""
-        assert self.source != "cssci", "CSSCI doesn't have <document type> info"
         use_cols = ["DT"]
         return self.generate_df_factory(use_cols, "DT")
 
@@ -237,11 +197,15 @@ class ComputeMetrics:
             self.generate_keyword_df().to_excel(writer, sheet_name="Keywords")
             self.generate_year_df().to_excel(writer, sheet_name="Yearly output")
 
-            if self.source in ["wos", "scopus"]:
+            if self.source == "wos":
                 self.generate_document_type_df().to_excel(writer, sheet_name="Document Type")
-            if self.source in ["wos", "cssci"]:
                 self.generate_institution_df().to_excel(writer, sheet_name="Institution")
-            if self.source in ["wos"]:
-                self.generate_i2_df().to_excel(writer, sheet_name="Institution with Subdivision")
-                self.generate_co_df().to_excel(writer, sheet_name="Country")
+                self.generate_sub_institution_df().to_excel(writer, sheet_name="Institution with Subdivision")
+                self.generate_country_df().to_excel(writer, sheet_name="Country")
                 self.generate_corresponding_author_df().to_excel(writer, sheet_name="Corresponding Authors")
+
+            elif self.source == "scopus":
+                self.generate_document_type_df().to_excel(writer, sheet_name="Document Type")
+
+            elif self.source == "cssci":
+                self.generate_institution_df().to_excel(writer, sheet_name="Institution")

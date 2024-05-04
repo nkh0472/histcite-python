@@ -36,6 +36,7 @@ dependencies = [
     "pandas>=2.0",
     "pyarrow",
     "openpyxl",
+    "refparse",
     ]
 
 [project.optional-dependencies]
@@ -63,4 +64,4 @@ version = {attr = "histcite.__version__"}
 source = ["histcite"]
 
 [tool.black]
-line-length = 120
+line-length = 140

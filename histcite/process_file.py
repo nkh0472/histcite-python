@@ -1,119 +1,146 @@
-from typing import Literal
+from typing import Literal, Optional
 
 import pandas as pd
 
-from .parse_reference import ParseReference
-from .recognize_reference import RecognizeReference
+from .parse_reference import parse_ref
 
 
-class ProcessFile:
-    """Process docs file, extract references and citation relationship."""
-
+class BuildRef:
     def __init__(self, docs_df: pd.DataFrame, source: Literal["wos", "cssci", "scopus"]):
-        """
-        Args:
-            docs_df: DataFrame of docs.
-            source: Data source. `wos`, `cssci` or `scopus`.
-        """
-        self.docs_df: pd.DataFrame = docs_df
-        self.source: Literal["wos", "cssci", "scopus"] = source
+        self.docs_df = docs_df
+        self.source = source
 
-    @staticmethod
-    def concat_refs(
-        cr_field: pd.Series,
-        source: Literal["wos", "cssci", "scopus"],
-    ) -> pd.DataFrame:
-        """Concat all parsed references and return dataframe.
+    def iterator(self):
+        for idx, cell in self.docs_df["CR"].items():
+            if isinstance(cell, str):
+                refs = cell.strip("; ").split("; ")
+                for ref in refs:
+                    parsed_ref = parse_ref(ref, self.source)  # type: ignore
+                    if parsed_ref:
+                        parsed_ref["node"] = idx  # type: ignore
+                        yield parsed_ref
 
-        Args:
-            cr_field: The CR field of docs_df.
-            source: Data source. 'wos', 'cssci' or 'scopus'.
-
-        Returns:
-            DataFrame of references.
-        """
-
-        def parsed_ref_iterator():
-            for idx, cell in cr_field.items():
-                if isinstance(cell, str):
-                    parsed_refs = ParseReference().parse_ref_cell(cell, source, idx)  # type: ignore
-                    if parsed_refs is not None:
-                        for parsed_ref in parsed_refs:
-                            yield parsed_ref
-
-        return pd.DataFrame(parsed_ref_iterator())
-
-    def extract_reference(self) -> pd.DataFrame:
-        """Extract total references and return reference dataframe."""
-
-        def assign_ref_id(refs_df: pd.DataFrame) -> pd.Series:
-            if self.source == "wos":
-                check_cols = ["FAU", "PY", "J9", "BP"]
-            elif self.source == "cssci":
-                check_cols = ["FAU", "TI"]
-            elif self.source == "scopus":
-                check_cols = ["FAU", "TI"]
-            else:
-                raise ValueError("Invalid source type")
-            return refs_df.groupby(by=check_cols, sort=False, dropna=False).ngroup()
-
-        cr_field = self.docs_df["CR"]
-        if self.source == "wos":
-            refs_df = self.concat_refs(cr_field, "wos")
-        elif self.source == "cssci":
-            refs_df = self.concat_refs(cr_field, "cssci")
-        elif self.source == "scopus":
-            refs_df = self.concat_refs(cr_field, "scopus")
-        else:
-            raise ValueError("Invalid source type")
-
-        # Maybe duplicate reference in some docs' references
+    def build(self):
+        refs_df = pd.DataFrame(self.iterator())
         refs_df.drop_duplicates(ignore_index=True, inplace=True)
-        refs_df.insert(0, "ref_index", refs_df.index)
-        refs_df.insert(1, "ref_id", assign_ref_id(refs_df))
-        refs_df = refs_df.convert_dtypes(dtype_backend="pyarrow")
+        if self.source == "scopus":
+            refs_df["FAU"] = refs_df["FAU"].str.split(", ", n=1).str.get(0)
+            refs_df["BP"] = refs_df["BP"].str.split("-").str.get(0)
         return refs_df
 
-    def process_citation(self, refs_df: pd.DataFrame) -> pd.DataFrame:
-        """Return citation relationship dataframe."""
 
-        def reference2citation(cited_doc_id_series: pd.Series) -> pd.Series:
-            citing_doc_id_series = pd.Series([[] for i in range(len(cited_doc_id_series))])
-            for doc_id, ref_list in cited_doc_id_series.items():
+class IdentifyCitation:
+    def __init__(self, docs_df: pd.DataFrame, refs_df: pd.DataFrame):
+        self.docs_df = docs_df
+        self.refs_df = refs_df
+
+    def identify_citation_factory(
+        self,
+        compare_cols: list[str],
+    ) -> pd.Series:
+        use_cols = ["node"] + compare_cols
+        docs_df = self.docs_df[use_cols]
+        refs_df = self.refs_df[use_cols]
+
+        # Drop rows with missing values
+        if "DI" in compare_cols:
+            thresh = 1
+        else:
+            thresh = len(compare_cols) - 1
+        docs_df = docs_df.dropna(subset=compare_cols, thresh=thresh)
+        refs_df = refs_df.dropna(subset=compare_cols, thresh=thresh)
+
+        # Type convert
+        col_type_mapper = {col: "string[pyarrow]" for col in compare_cols}
+        docs_df = docs_df.astype(col_type_mapper)
+        refs_df = refs_df.astype(col_type_mapper)
+
+        # Lower case convert
+        col_lower_case = [i for i in compare_cols if i != "PY"]
+        for col in col_lower_case:
+            docs_df[col] = docs_df[col].str.lower()
+            refs_df[col] = refs_df[col].str.lower()
+
+        shared_df = pd.merge(refs_df, docs_df, how="left", on=compare_cols, suffixes=("_x", "_y")).dropna(subset="node_y")
+        cited_refs_series = shared_df.groupby("node_x")["node_y"].apply(list)
+        return cited_refs_series
+
+    def identify_wos_citation(self):
+        def merge_list(a: Optional[list[int]], b: Optional[list[int]]) -> Optional[list[int]]:
+            """Merge match results from doi and compare cols."""
+            c = []
+            if isinstance(a, list):
+                c.extend(a)
+            if isinstance(b, list):
+                c.extend(b)
+            if c:
+                return list(set(c))
+
+        # Fill NA value in VL field
+        # Reference paper's VL info may contain in SO field.
+        self.docs_df = self.docs_df.combine_first(self.docs_df["SO"].str.extract(r", VOLS? (?P<VL>[\d-]+)"))
+
+        # DOI exists
+        compare_cols = ["DI"]
+        result_from_doi = self.identify_citation_factory(compare_cols)
+
+        # DOI not exists
+        compare_cols = ["FAU", "VL", "BP", "PY"]
+        result_from_fields = self.identify_citation_factory(compare_cols)
+        cited_refs_series = result_from_doi.combine(result_from_fields, merge_list)
+        return cited_refs_series
+
+    def identify_scopus_citation(self):
+        compare_cols = ["FAU", "VL", "BP", "PY"]
+        return self.identify_citation_factory(compare_cols)
+
+    def identify_cssci_citation(self):
+        compare_cols = ["FAU", "TI", "PY"]
+        return self.identify_citation_factory(compare_cols)
+
+
+class BuildCitation:
+    def __init__(self, docs_df: pd.DataFrame, refs_df: pd.DataFrame, source: Literal["wos", "cssci", "scopus"]):
+        self.docs_df = docs_df
+        self.refs_df = refs_df
+        self.source = source
+
+    def build(self) -> pd.DataFrame:
+        def reference2citation(cited_nodes_series: pd.Series) -> pd.Series:
+            citing_nodes_series = pd.Series([[] for _ in range(cited_nodes_series.size)])
+            for node, ref_list in cited_nodes_series.items():
                 if len(ref_list) > 0:
-                    for ref_index in ref_list:
-                        citing_doc_id_series[ref_index].append(doc_id)
-            return citing_doc_id_series
+                    for i in ref_list:
+                        citing_nodes_series[i].append(node)
+            return citing_nodes_series
 
-        def remove_duplicate_id(a: list, b: int):
-            return [i for i in a if i != b]
+        def list_to_str(list_like: Optional[list[int]]) -> Optional[str]:
+            if list_like:
+                return "; ".join([str(i) for i in list_like])
 
         if self.source == "wos":
-            cited_doc_id_series = RecognizeReference.recognize_wos_reference(self.docs_df, refs_df)
-
-        elif self.source == "cssci":
-            cited_doc_id_series = RecognizeReference.recognize_cssci_reference(self.docs_df, refs_df)
+            cited_nodes_series = IdentifyCitation(self.docs_df, self.refs_df).identify_wos_citation()
 
         elif self.source == "scopus":
-            cited_doc_id_series = RecognizeReference.recognize_scopus_reference(self.docs_df, refs_df)
+            cited_nodes_series = IdentifyCitation(self.docs_df, self.refs_df).identify_scopus_citation()
 
-        else:
-            raise ValueError("Invalid source type")
+        elif self.source == "cssci":
+            cited_nodes_series = IdentifyCitation(self.docs_df, self.refs_df).identify_cssci_citation()
 
-        cited_doc_id_series = cited_doc_id_series.reindex(self.docs_df["doc_id"])
-        cited_doc_id_series = cited_doc_id_series.apply(lambda x: x if isinstance(x, list) else [])
-        cited_doc_id_series = cited_doc_id_series.to_frame().apply(
-            lambda x: remove_duplicate_id(x["doc_id_y"], x.name), axis=1
-        )
-        citing_doc_id_series = reference2citation(cited_doc_id_series)
+        # Remove self-citing of node
+        for idx in cited_nodes_series.index:
+            try:
+                cited_nodes_series.loc[idx].remove(idx)
+            except:
+                pass
+        cited_nodes_series = cited_nodes_series.reindex(self.docs_df["node"], fill_value=list())  # type: ignore
+        citing_nodes_series = reference2citation(cited_nodes_series)
 
-        lcr_field = cited_doc_id_series.apply(len)
-        lcs_field = citing_doc_id_series.apply(len)
-        citation_relation = pd.DataFrame({"doc_id": self.docs_df.doc_id})
-        citation_relation["cited_doc_id"] = ["; ".join([str(j) for j in i]) if i else None for i in cited_doc_id_series]
-        citation_relation["citing_doc_id"] = [
-            "; ".join([str(j) for j in i]) if i else None for i in citing_doc_id_series
-        ]
-        citation_relation["LCR"] = lcr_field
-        citation_relation["LCS"] = lcs_field
-        return citation_relation
+        lcr_field = cited_nodes_series.apply(len)
+        lcs_field = citing_nodes_series.apply(len)
+        citation_matrix = pd.DataFrame({"node": self.docs_df.node})
+        citation_matrix["cited_nodes"] = cited_nodes_series.apply(list_to_str)
+        citation_matrix["citing_nodes"] = citing_nodes_series.apply(list_to_str)
+        citation_matrix["LCR"] = lcr_field
+        citation_matrix["LCS"] = lcs_field
+        return citation_matrix

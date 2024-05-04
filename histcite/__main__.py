@@ -1,9 +1,8 @@
 import argparse
 from pathlib import Path
 
-from .compute_metrics import ComputeMetrics
 from .network_graph import GraphViz
-from .process_file import ProcessFile
+from .process_file import BuildCitation, BuildRef
 from .read_file import ReadFile
 
 
@@ -43,30 +42,20 @@ def cli():
     Path.mkdir(output_path, exist_ok=True)
 
     docs_df = ReadFile(folder_path, args.source).read_all()
-    process = ProcessFile(docs_df, args.source)
-    refs_df = process.extract_reference()
-    citation_relation = process.process_citation(refs_df)
+    refs_df = BuildRef(docs_df, args.source).build()
+    citation_matrix = BuildCitation(docs_df, refs_df, args.source).build()
 
-    cm = ComputeMetrics(docs_df, citation_relation, args.source)
-    cm.write2excel(output_path / "descriptive_statistics.xlsx")
-
-    graph = GraphViz(docs_df, citation_relation, args.source)
-
+    graph = GraphViz(docs_df, citation_matrix, args.source)
     if args.top is not None:
-        doc_id_list = (
-            citation_relation[citation_relation["LCS"] > 0]
-            .sort_values("LCS", ascending=False)
-            .index[: args.top]
-            .tolist()
-        )
+        node_list = citation_matrix[citation_matrix["LCS"] > 0].sort_values("LCS", ascending=False).index[: args.top].tolist()
 
     elif args.threshold is not None:
-        doc_id_list = citation_relation[citation_relation["LCS"] >= args.threshold].index.tolist()
+        node_list = citation_matrix[citation_matrix["LCS"] >= args.threshold].index.tolist()
 
     else:
         raise ValueError("<top> or <threshold> must be specified.")
 
-    graph_dot_file = graph.generate_dot_file(doc_id_list, show_timeline=args.disable_timeline)
+    graph_dot_file = graph.generate_dot_file(node_list, show_timeline=args.disable_timeline)
     graph_dot_path = output_path / "graph.dot"
     with open(graph_dot_path, "w") as f:
         f.write(graph_dot_file)
