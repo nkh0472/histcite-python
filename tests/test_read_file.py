@@ -49,7 +49,7 @@ class TestReadWosFile:
 
     def test_parse_wos_file(self):
         file_path = Path("tests/testdata/savedrecs.txt")
-        df = ReadWosFile.read_wos_file(file_path)
+        df = ReadWosFile().read_wos_file(file_path)
         assert "I2" in df.columns.tolist()
         assert df.shape[0] == 300
 

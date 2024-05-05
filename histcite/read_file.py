@@ -13,21 +13,6 @@ from typing import Literal, Optional
 import pandas as pd
 
 
-def read_csv_file(file_path: Path, use_cols: list[str], sep: str = ",") -> pd.DataFrame:
-    try:
-        df = pd.read_csv(
-            file_path,
-            sep=sep,
-            header=0,
-            on_bad_lines="skip",
-            usecols=use_cols,
-            # dtype_backend="pyarrow",
-        )
-        return df
-    except ValueError:
-        raise ValueError(f"File {file_path.name} is not a valid csv file")
-
-
 class ReadWosFile:
     @staticmethod
     def extract_corresponding_author(entry: Optional[str]) -> Optional[str]:
@@ -35,12 +20,13 @@ class ReadWosFile:
         if isinstance(entry, str):
             cau_list = []
             pattern = r"(?:^|\.; )(.+?)\s*\(corresponding author\)"
-            for cau in re.findall(pattern, entry):
-                if "; " in cau:
-                    cau_list.extend(cau.split("; "))
-                else:
-                    cau_list.append(cau)
-            return "; ".join(set(cau_list))
+            if match_values := re.findall(pattern, entry):
+                for cau in match_values:
+                    if "; " in cau:
+                        cau_list.extend(cau.split("; "))
+                    else:
+                        cau_list.append(cau)
+                return "; ".join(set(cau_list))
 
     @staticmethod
     def extract_country(entry: Optional[str]) -> Optional[str]:
@@ -68,11 +54,42 @@ class ReadWosFile:
                 return "; ".join(set(institution_list))
 
     @staticmethod
-    def read_wos_file(file_path: Path) -> pd.DataFrame:
+    def from_plain_text(file_path: Path, use_cols: list[str]) -> pd.DataFrame:
+        with open(file_path, "r") as f:
+            text = f.read()
+
+        col_data = {}
+        parts = re.split("\n(?=PT )", text)[1:]
+        record_num = len(parts)
+        for col in use_cols:
+            pattern = rf"\n{col} (.*?)\n[A-Z](?:[A-Z]|\d) "
+            match_values = re.findall(pattern, text, flags=re.S)
+            if len(match_values) != record_num:
+                match_values = []
+                for part in parts:
+                    if match := re.search(pattern, part, flags=re.S):
+                        match_values.append(match.group(1))
+                    else:
+                        match_values.append(None)
+            col_data[col] = match_values
+
+        df = pd.DataFrame(col_data)
+        df["NR"] = df["NR"].apply(int)
+        df["TC"] = df["TC"].apply(int)
+        df["AU"] = df["AU"].str.replace(r"\n\s+", "; ", regex=True)
+        df["CR"] = df["CR"].str.replace(r"\n\s+", "; ", regex=True)
+        df["C1"] = df["C1"].str.replace(r"\.\n\s+", "; ", regex=True).str.rstrip(".")
+
+        df["SO"] = df["SO"].str.replace(r"\n\s+", " ", regex=True)
+        df["DE"] = df["DE"].str.replace(r"\n\s+", " ", regex=True)
+        df["C3"] = df["C3"].str.replace(r"\n\s+", " ", regex=True)
+        return df
+
+    def read_wos_file(self, file_path: Path) -> pd.DataFrame:
         """Read Web of Science file and return dataframe.
 
         Args:
-            file_path: Path of a Web of Science file. File name is similar to `savedrecs.txt`.
+            file_path: Path of a Web of Science file. File name is similar to `savedrecs.txt`. It can be tab-delimited or plain text format.
         """
         use_cols = [
             "AU",
@@ -92,7 +109,11 @@ class ReadWosFile:
             "C1",
             "RP",
         ]
-        df = read_csv_file(file_path, use_cols, "\t")
+        try:
+            df = pd.read_csv(file_path, sep="\t", header=0, on_bad_lines="skip", usecols=use_cols)
+        except ValueError:
+            df = self.from_plain_text(file_path, use_cols)
+
         df.insert(1, "FAU", df["AU"].str.split(pat=";", n=1).str[0].str.replace(",", ""))
         df.insert(2, "CAU", df["RP"].apply(ReadWosFile.extract_corresponding_author))
         df["CO"] = df["C1"].apply(ReadWosFile.extract_country)
@@ -188,8 +209,7 @@ class ReadScopusFile:
             "Document Type",
             "EID",
         ]
-
-        df = read_csv_file(file_path, use_cols)
+        df = pd.read_csv(file_path, sep=",", header=0, on_bad_lines="skip", usecols=use_cols)
         # Rename columns
         column_mapping = {
             "Authors": "AU",
@@ -244,7 +264,7 @@ class ReadFile:
 
     def read_file(self, file_path: Path):
         if self.source == "wos":
-            return ReadWosFile.read_wos_file(file_path)
+            return ReadWosFile().read_wos_file(file_path)
         elif self.source == "scopus":
             return ReadScopusFile.read_scopus_file(file_path)
         elif self.source == "cssci":

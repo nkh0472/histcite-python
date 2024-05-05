@@ -28,7 +28,7 @@ $ pip install histcite-python
 ## 数据准备
 |数据来源|下载说明|原始文件名|
 |:----|:----|:----|
-|Web of Science|`核心合集`，格式选择 `Tab delimited file/制表符分隔文件`，导出内容选择 `Full Record and Cited References/全记录与引用的参考文献` 或者是 `Custom selection/自定义选择项`，全选字段。|`savedrecs*.txt`|
+|Web of Science|`核心合集`，格式选择 `Tab delimited file` 或 `Plain text file`，导出内容选择 `Full Record and Cited References` 或者是 `Custom selection`，全选字段。|`savedrecs*.txt`|
 |CSSCI|从 `CSSCI数据库` 正常导出即可。|`LY_*.txt`|
 |Scopus|网站语言切换到英文，格式选择 `CSV` 文件，导出字段需要额外勾选 `Author keywords` 和 `Include references`，或者直接全选字段。|`scopus*.csv`|
 
@@ -55,7 +55,7 @@ options:
 ```
 
 ```console
-$ histcite /Users/.../Downloads/dataset wos --top 50 --disable_timeline
+$ histcite /Users/.../Downloads/dataset wos --top 50
 ```
 
 > [!NOTE]
