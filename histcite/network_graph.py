@@ -6,6 +6,48 @@ from typing import Literal, Optional, Union
 import pandas as pd
 
 
+class CitNetExplorer:
+    """Generate publications.txt and citations.txt for CitNetExplorer sofaware."""
+
+    def __init__(self, docs_df: pd.DataFrame, citation_matrix: pd.DataFrame):
+        self.docs_df = docs_df
+        self.citation_matrix = citation_matrix
+
+    def generate_publications_df(self):
+        use_cols = ["AU", "TI", "SO", "PY"]
+        df = self.docs_df.loc[:, use_cols]
+        if "DI" in self.docs_df.columns.to_list():
+            df["DI"] = self.docs_df["DI"]
+        df["cit_score"] = self.citation_matrix["LCS"]
+        column_mapping = {
+            "AU": "authors",
+            "TI": "title",
+            "SO": "source",
+            "PY": "year",
+            "DI": "doi",
+        }
+        df.rename(columns=column_mapping, inplace=True)
+        return df
+
+    def generate_citations_df(self):
+        records = []
+        for node in self.citation_matrix["node"]:
+            cited_nodes = self.citation_matrix.loc[node, "cited_nodes"]
+            if isinstance(cited_nodes, str):
+                if "; " not in cited_nodes:
+                    records.append((node, int(cited_nodes)))
+                else:
+                    records.extend((node, int(i)) for i in cited_nodes.split("; "))
+        df = pd.DataFrame(records, columns=["citing_pub_index", "cited_pub_index"])
+        # CitNetExplorer record index starts with 1
+        return df + 1
+
+    def export(self, folder_path: Path):
+        Path.mkdir(folder_path, exist_ok=True)
+        self.generate_citations_df().to_csv(folder_path / "citations.txt", sep="\t", index=False)
+        self.generate_publications_df().to_csv(folder_path / "publications.txt", sep="\t", index=False)
+
+
 class GraphViz:
     """Generate dot file for Graphviz. Support citation network of multi nodes and specific node."""
 
@@ -13,10 +55,8 @@ class GraphViz:
         self,
         docs_df: pd.DataFrame,
         citation_matrix: pd.DataFrame,
-        source: Literal["wos", "cssci", "scopus"],
     ):
         self.merged_docs_df = docs_df.merge(citation_matrix, on="node").dropna(subset="PY")
-        self.source = source
 
     def generate_edge(
         self,
@@ -141,13 +181,11 @@ class GraphViz:
 
     def generate_graph_node_info(self) -> pd.DataFrame:
         """Generate dataframe of graph node info. Columns differ according to `source`."""
-        use_cols = ["node", "AU", "TI", "PY", "SO", "LCS", "TC"]
-        if self.source == "cssci":
-            use_cols.remove("TC")
+        use_cols = ["node", "AU", "TI", "PY", "SO", "LCS"]
         graph_node_info = self.merged_docs_df.loc[self.total_nodes, use_cols]
-        if "TC" in use_cols:
-            graph_node_info.rename(columns={"TC": "GCS"}, inplace=True)
+        if "TC" in self.merged_docs_df.columns.to_list():
+            graph_node_info["GCS"] = self.merged_docs_df["TC"]
         return graph_node_info
 
-    def export_graph_node_info(self, file_path: Path):
-        self.generate_graph_node_info().to_excel(file_path, index=False)
+    def export_graph_node_info(self, folder_path: Path):
+        self.generate_graph_node_info().to_excel(folder_path / "graph_node_info.xlsx", index=False)

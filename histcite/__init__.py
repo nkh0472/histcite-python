@@ -1,14 +1,15 @@
 """Welcome to use `histcite-python`. You can get detailed information about the package here."""
 
-__version__ = "2.1.0"
+__version__ = "2.2.0"
 
 from .compute_metrics import ComputeMetrics
-from .network_graph import GraphViz
+from .network_graph import CitNetExplorer, GraphViz
 from .process_file import BuildCitation, BuildRef
 from .read_file import ReadFile
 
 __all__ = [
     "ComputeMetrics",
+    "CitNetExplorer",
     "GraphViz",
     "BuildRef",
     "BuildCitation",

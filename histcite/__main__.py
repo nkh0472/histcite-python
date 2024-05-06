@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-from .network_graph import GraphViz
+from .network_graph import CitNetExplorer, GraphViz
 from .process_file import BuildCitation, BuildRef
 from .read_file import ReadFile
 
@@ -38,14 +38,14 @@ def cli():
 
     args = parser.parse_args()
     folder_path = Path(args.folder_path)
-    output_path = folder_path / "result"
-    Path.mkdir(output_path, exist_ok=True)
 
     docs_df = ReadFile(folder_path, args.source).read_all()
     refs_df = BuildRef(docs_df, args.source).build()
     citation_matrix = BuildCitation(docs_df, refs_df, args.source).build()
 
-    graph = GraphViz(docs_df, citation_matrix, args.source)
+    citnet = CitNetExplorer(docs_df, citation_matrix)
+
+    graph = GraphViz(docs_df, citation_matrix)
     if args.top is not None:
         node_list = citation_matrix[citation_matrix["LCS"] > 0].sort_values("LCS", ascending=False).index[: args.top].tolist()
 
@@ -56,7 +56,12 @@ def cli():
         raise ValueError("<top> or <threshold> must be specified.")
 
     graph_dot_file = graph.generate_dot_file(node_list, show_timeline=args.disable_timeline)
-    graph_dot_path = output_path / "graph.dot"
-    with open(graph_dot_path, "w") as f:
+    graph_node_info = graph.generate_graph_node_info()
+
+    output_path = folder_path / "result"
+    Path.mkdir(output_path, exist_ok=True)
+
+    graph_node_info.to_excel(output_path / "graph_node_info.xlsx", index=False)
+    with open(output_path / "graph.dot", "w") as f:
         f.write(graph_dot_file)
-    graph.export_graph_node_info(output_path / "graph_node_info.xlsx")
+    citnet.export(output_path)
