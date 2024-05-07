@@ -7,31 +7,31 @@ body:
   - type: textarea
     id: problem
     attributes:
-      label: 问题描述
-      description: 请简要描述你遇到的问题。
+      label: Problem Description
+      description: Please provide a brief description of the issue you encountered.
     validations:
       required: false
 
   - type: textarea
     id: error
     attributes:
-      label: 报错信息
-      description: 请将完整的报错信息粘贴到此处。
+      label: Error Message
+      description: Please paste the complete error message here.
     validations:
       required: true
 
   - type: textarea
     id: version
     attributes:
-      label: 版本信息
-      description: 请粘贴 ``import histcite; histcite.show_versions()`` 的结果。
+      label: Version Information
+      description: Please paste the output of `import histcite; histcite.show_versions()`.
     validations:
       required: true
 
   - type: dropdown
     id: source
     attributes:
-      label: 使用数据源
+      label: Data Source Used
       multiple: false
       options:
         - Web of Science
@@ -43,7 +43,7 @@ body:
   - type: textarea
     id: dataset
     attributes:
-      label: 使用数据集
-      description: 请上传一份能复现 bug 的数据集。
+      label: Dataset Used
+      description: Please upload a dataset that can reproduce the bug.
     validations:
       required: false

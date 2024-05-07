@@ -4,34 +4,20 @@ title: 'Feature: '
 labels: enhancement
 
 body:
-  - type: checkboxes
-    id: feature
+  - type: textarea
+    id: description
     attributes:
-      label: Feature 类型
-      options:
-        - label: 参考文献解析
-        - label: 支持其他数据源
-        - label: 增加功能
+      label: Feature Description
     validations:
       required: true
 
   - type: dropdown
     id: source
     attributes:
-      label: 使用数据源
-      multiple: false
+      label: Select Data Source 
       options:
         - Web of Science
         - Scopus
         - CSSCI
-        - 其他
     validations:
-      required: true
-
-  - type: textarea
-    id: description
-    attributes:
-      label: Feature 描述
-      placeholder: 请提供一份包含至少500条数据的数据集[非必要]。
-    validations:
-      required: true
+      required: false
