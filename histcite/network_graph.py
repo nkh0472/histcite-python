@@ -39,7 +39,6 @@ class CitNetExplorer:
                 else:
                     records.extend((node, int(i)) for i in cited_nodes.split("; "))
         df = pd.DataFrame(records, columns=["citing_pub_index", "cited_pub_index"])
-        # CitNetExplorer record index starts with 1
         return df + 1
 
     def export(self, folder_path: Path):

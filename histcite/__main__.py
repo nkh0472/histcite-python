@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-from .network_graph import CitNetExplorer, GraphViz
+from .network_graph import GraphViz
 from .process_file import BuildCitation, BuildRef
 from .read_file import ReadFile
 
@@ -43,7 +43,7 @@ def cli():
     refs_df = BuildRef(docs_df, args.source).build()
     citation_matrix = BuildCitation(docs_df, refs_df, args.source).build()
 
-    citnet = CitNetExplorer(docs_df, citation_matrix)
+    # citnet = CitNetExplorer(docs_df, citation_matrix)
 
     graph = GraphViz(docs_df, citation_matrix)
     if args.top is not None:
@@ -64,4 +64,3 @@ def cli():
     graph_node_info.to_excel(output_path / "graph_node_info.xlsx", index=False)
     with open(output_path / "graph.dot", "w") as f:
         f.write(graph_dot_file)
-    citnet.export(output_path)

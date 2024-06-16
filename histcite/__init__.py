@@ -3,13 +3,12 @@
 __version__ = "2.2.0"
 
 from .compute_metrics import ComputeMetrics
-from .network_graph import CitNetExplorer, GraphViz
+from .network_graph import GraphViz
 from .process_file import BuildCitation, BuildRef
 from .read_file import ReadFile
 
 __all__ = [
     "ComputeMetrics",
-    "CitNetExplorer",
     "GraphViz",
     "BuildRef",
     "BuildCitation",
